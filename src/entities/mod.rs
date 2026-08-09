@@ -2,6 +2,7 @@
 
 pub mod prelude;
 
+pub mod expenses;
 pub mod friendships;
 pub mod group_members;
 pub mod groups;
