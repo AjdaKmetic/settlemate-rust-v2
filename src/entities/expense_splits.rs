@@ -3,33 +3,28 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "expenses")]
+#[sea_orm(table_name = "expense_splits")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub description: String,
+    pub expense_id: i32,
+    pub user_id: i32,
     pub amount_cents: i64,
-    pub paid_by: i32,
-    pub group_id: Option<i32>,
-    pub split_type: String,
-    pub created_at: DateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::expense_splits::Entity")]
-    ExpenseSplits,
     #[sea_orm(
-        belongs_to = "super::groups::Entity",
-        from = "Column::GroupId",
-        to = "super::groups::Column::Id",
+        belongs_to = "super::expenses::Entity",
+        from = "Column::ExpenseId",
+        to = "super::expenses::Column::Id",
         on_update = "NoAction",
-        on_delete = "SetNull"
+        on_delete = "Cascade"
     )]
-    Groups,
+    Expenses,
     #[sea_orm(
         belongs_to = "super::users::Entity",
-        from = "Column::PaidBy",
+        from = "Column::UserId",
         to = "super::users::Column::Id",
         on_update = "NoAction",
         on_delete = "Restrict"
@@ -37,15 +32,9 @@ pub enum Relation {
     Users,
 }
 
-impl Related<super::expense_splits::Entity> for Entity {
+impl Related<super::expenses::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::ExpenseSplits.def()
-    }
-}
-
-impl Related<super::groups::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Groups.def()
+        Relation::Expenses.def()
     }
 }
 

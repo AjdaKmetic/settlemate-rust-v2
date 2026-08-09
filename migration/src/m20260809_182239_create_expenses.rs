@@ -25,7 +25,8 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .from(Expenses::Table, Expenses::PaidBy)
-                            .to(Users::Table, Users::Id),
+                            .to(Users::Table, Users::Id)
+                            .on_delete(ForeignKeyAction::Restrict),
                     )
                     .foreign_key(
                         ForeignKey::create()
