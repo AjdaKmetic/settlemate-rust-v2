@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Users::Table)
                     .if_not_exists()
-                    .col(pk_auto(Users::Id))
+                    .col(pk_auto(Users::Id)) // določanje primary key-ja
                     .col(string(Users::Name).not_null())
                     .col(string(Users::Username).not_null().unique_key())
                     .col(string(Users::Email).not_null().unique_key())

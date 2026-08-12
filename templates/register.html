@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registracija · SettleMate</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <h1>Ustvari račun</h1>
+            <p class="auth-subtitle">
+                Registriraj se za uporabo aplikacije SettleMate.
+            </p>
+
+            {% if created %}
+                <div class="auth-success">
+                    Račun je bil uspešno ustvarjen.
+                </div>
+
+            {% else %}
+                {% if has_error %}
+                    <div class="auth-error">
+                        {{ error_message }}
+                    </div>
+                {% endif %}
+
+                <form method="post" action="/register" class="auth-form">
+                    <label>
+                        Ime
+                        <input
+                            type="text"
+                            name="name"
+                            autocomplete="name"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Uporabniško ime
+                        <input
+                            type="text"
+                            name="username"
+                            autocomplete="username"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        E-pošta
+                        <input
+                            type="email"
+                            name="email"
+                            autocomplete="email"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Geslo
+                        <input
+                            type="password"
+                            name="password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Ponovi geslo
+                        <input
+                            type="password"
+                            name="password_confirmation"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </label>
+
+                    <button type="submit" class="btn-create">
+                        Ustvari račun
+                    </button>
+                </form>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

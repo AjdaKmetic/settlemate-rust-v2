@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prijava – SettleMate</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <h1>Prijava</h1>
+        <p>Prijavi se v svoj SettleMate račun.</p>
+
+        {% if has_error %}
+        <p class="auth-error">{{ error_message }}</p>
+        {% endif %}
+
+        <form class="auth-form" action="/login" method="post">
+            <label for="login">Uporabniško ime ali e-pošta</label>
+            <input
+                id="login"
+                name="login"
+                type="text"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">Geslo</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button class="btn-create" type="submit">
+                Prijava
+            </button>
+        </form>
+
+        <p class="auth-link">
+            Še nimaš računa?
+            <a href="/register">Registracija</a>
+        </p>
+    </main>
+</body>
+</html>

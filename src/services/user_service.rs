@@ -1,12 +1,15 @@
-use crate::services::db::auth_service::{hash_password, verify_password};
-use crate::{entities::users, models::user::UserId};
+use crate::services::password_service::{hash_password, verify_password};
+use crate::entities::users;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, DeleteResult, EntityTrait, IntoActiveModel,
-    QueryFilter, Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
 use users::Entity as Users;
 
-// registracija uporabnika
+// ========================
+// funkcije za delo z bazo:
+// ========================
+
+// shranjevanje uporabnika v bazo
 pub async fn create_user(
     db: &DatabaseConnection,
     name: &str,
@@ -39,7 +42,7 @@ pub async fn find_user_by_username(
 
 pub async fn find_user_by_id(
     db: &DatabaseConnection,
-    id: UserId,
+    id: i32,
 ) -> Result<Option<users::Model>, sea_orm::DbErr> {
     Users::find_by_id(id).one(db).await
 }
@@ -54,19 +57,19 @@ pub async fn find_user_by_email(
         .await
 }
 
-// log in (z emailom ali uporabniškim imenom)
-pub async fn login_user(
+// preverjanje identitete uporabnika (z emailom ali uporabniškim imenom)
+pub async fn verify_user_credentials( 
     db: &DatabaseConnection,
     login: &str,
     password: &str,
 ) -> Result<Option<users::Model>, sea_orm::DbErr> {
     let user = if login.contains('@') {
-        find_user_by_email(db, login).await?
+        find_user_by_email(db, login).await? // ? vrne Option<users::Model>, če je Result = Ok(...), sicer vrne Err(e)
     } else {
         find_user_by_username(db, login).await?
     };
 
-    // če user obstaja, preveri password (vrni user ali None)
+    // če user obstaja, preveri ali je password pravilen
     match user {
         Some(user) => {
             if verify_password(password, &user.password_hash) {

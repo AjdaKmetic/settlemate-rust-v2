@@ -18,7 +18,7 @@ impl MigrationTrait for Migration {
                         ForeignKey::create()
                             .from(GroupMembers::Table, GroupMembers::GroupId)
                             .to(Groups::Table, Groups::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
+                            .on_delete(ForeignKeyAction::Cascade), // pove, kaj se zgodi z vrstico v tabeli group_members, če se izbriše vrstica v tabeli groups (Cascade, SetNull, Restrict)
                     )
                     .foreign_key(
                         ForeignKey::create()
