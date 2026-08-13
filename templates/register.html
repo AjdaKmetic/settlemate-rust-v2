@@ -17,9 +17,10 @@
             {% if created %}
                 <div class="auth-success">
                     Račun je bil uspešno ustvarjen.
+                    <a href="/login">Prijavi se.</a>
                 </div>
-
             {% else %}
+            
                 {% if has_error %}
                     <div class="auth-error">
                         {{ error_message }}

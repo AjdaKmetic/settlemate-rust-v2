@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prijava – SettleMate</title>
+    <title>Prijava – SettleMate</title> <!--naslov browserjevega zavihka-->
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="auth-page">
@@ -15,6 +15,7 @@
         <p class="auth-error">{{ error_message }}</p>
         {% endif %}
 
+        <!--obrazec, ki ga uporabnik na koncu odda-->
         <form class="auth-form" action="/login" method="post">
             <label for="login">Uporabniško ime ali e-pošta</label>
             <input
@@ -41,7 +42,7 @@
 
         <p class="auth-link">
             Še nimaš računa?
-            <a href="/register">Registracija</a>
+            <a href="/register">Registriraj se</a>
         </p>
     </main>
 </body>

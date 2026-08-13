@@ -7,6 +7,7 @@ mod m20260807_154541_create_friendships;
 mod m20260809_182239_create_expenses;
 mod m20260809_195359_create_expense_splits;
 mod m20260809_203112_create_sessions;
+mod m20260813_012101_create_payments;
 
 pub struct Migrator;
 
@@ -21,6 +22,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260809_182239_create_expenses::Migration),
             Box::new(m20260809_195359_create_expense_splits::Migration),
             Box::new(m20260809_203112_create_sessions::Migration),
+            Box::new(m20260813_012101_create_payments::Migration),
         ]
     }
 }

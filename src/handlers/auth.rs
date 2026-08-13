@@ -1,4 +1,4 @@
-// handlerji za avtentikacijo uporabnika (registracija, prijava, odjava, ali je uporabnik prijavljen, ustvarjanje seje)
+// avtentikacija uporabnika (registracija, prijava, odjava, ali je uporabnik prijavljen, ustvarjanje seje)
 
 use askama::Template;
 use axum::{
@@ -275,9 +275,9 @@ pub async fn login_user(State(state): State<AppState>, jar: CookieJar, Form(form
     };
 
     let cookie = Cookie::build(("settlemate_session", token))
-        .path("/")
-        .http_only(true)
-        .same_site(SameSite::Lax);
+        .path("/") // cookie se pošilja pri requestih na celotni strani
+        .http_only(true) // JavaScript ne more dostopati do cookie-ja
+        .same_site(SameSite::Lax); // omeji pošiljanje cookie-ja pri requestih z drugih strani
 
     (jar.add(cookie), Redirect::to("/")).into_response()
 }

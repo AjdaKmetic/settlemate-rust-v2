@@ -13,6 +13,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub email: String,
     pub password_hash: String,
+    pub is_active: bool,
     pub created_at: DateTimeUtc,
 }
 

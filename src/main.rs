@@ -10,12 +10,15 @@ use axum::{
 use sea_orm::Database;
 
 use app::state::AppState;
-use handlers::auth::{
-    login_form,
-    login_user,
-    logout_user,
-    register_form,
-    register_user,
+use handlers::{
+    auth::{
+        login_form,
+        login_user,
+        logout_user,
+        register_form,
+        register_user,
+    },
+    index::index,
 };
 
 use tower_http::services::ServeDir;
@@ -29,6 +32,7 @@ async fn main() {
     let state = AppState { db };
 
     let app = Router::new()
+        .route("/", get(index))
         .route("/register", get(register_form).post(register_user))
         .route("/login", get(login_form).post(login_user))
         .route("/logout", post(logout_user))
@@ -39,7 +43,7 @@ async fn main() {
         .await
         .expect("Strežnika ni bilo mogoče zagnati.");
 
-    println!("SettleMate teče na http://127.0.0.1:3000");
+    println!("SettleMate aplikacija je dostopna na http://127.0.0.1:3000");
 
     axum::serve(listener, app)
         .await

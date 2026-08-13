@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                     .col(string(Users::Username).not_null().unique_key())
                     .col(string(Users::Email).not_null().unique_key())
                     .col(string(Users::PasswordHash).not_null())
+                    .col(boolean(Users::IsActive).not_null().default(true))
                     .col(
                         timestamp(Users::CreatedAt)
                             .not_null()
@@ -46,5 +47,6 @@ enum Users {
     Username,
     Email,
     PasswordHash,
+    IsActive,
     CreatedAt,
 }
