@@ -133,3 +133,45 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         }
     }
 }
+
+
+// TESTI
+
+#[cfg(test)]
+mod tests {
+    use super::IndexTemplate;
+
+    #[test]
+    fn pozitivno_stanje_je_pravilno_prikazano() {
+        let template = IndexTemplate::new(
+            "ajda".to_string(),
+            12345,
+        );
+
+        assert_eq!(template.balance_state_class, "balance-positive");
+        assert_eq!(template.balance_label, "Dolgujejo ti");
+        assert_eq!(template.formatted_balance, "123,45 €");
+    }
+
+    #[test]
+    fn negativno_stanje_je_pravilno_prikazano() {
+        let template = IndexTemplate::new(
+            "ajda".to_string(),
+            -123,
+        );
+        assert_eq!(template.balance_state_class, "balance-negative");
+        assert_eq!(template.balance_label, "Dolguješ");
+        assert_eq!(template.formatted_balance, "1,23 €");
+    }
+
+    #[test]
+    fn nicelno_stanje_je_pravilno_prikazano() {
+        let template = IndexTemplate::new(
+            "ajda".to_string(),
+            0,
+        );
+        assert_eq!(template.balance_state_class, "balance-neutral");
+        assert_eq!(template.balance_label, "Vse štima");
+        assert_eq!(template.formatted_balance, "0,00 €");
+    }
+}

@@ -343,75 +343,65 @@ pub async fn logout_user(State(state): State<AppState>, jar: CookieJar) -> Respo
     
 }
 
-// ====================================
-//               TESTI
-// ====================================
+
+// TESTI
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::RegisterForm;
 
-    #[test]
-    fn valid_register_form() {
-        let form = RegisterForm {
+    fn valid_form() -> RegisterForm {
+        RegisterForm {
             name: "Ajda".to_string(),
             username: "ajda".to_string(),
-            email: "ajda@email.si".to_string(),
-            password: "geslo123".to_string(),
-            password_confirmation: "geslo123".to_string(),
-        };
-
-        assert_eq!(form.validate(), Ok(()));
+            email: "ajda@gmail.com".to_string(),
+            password: "varnogeslo123".to_string(),
+            password_confirmation: "varnogeslo123".to_string(),
+        }
     }
 
     #[test]
-    fn register_form_rejects_empty_name() {
-        let form = RegisterForm {
-            name: "".to_string(),
-            username: "ajda".to_string(),
-            email: "ajda@email.si".to_string(),
-            password: "geslo123".to_string(),
-            password_confirmation: "geslo123".to_string(),
-        };
+    fn veljaven_obrazec_je_sprejet() {
+        let form = valid_form();
+
+        assert!(form.validate().is_ok());
+    }
+
+    #[test]
+    fn prazno_ime_je_zavrnjeno() {
+        let mut form = valid_form();
+        form.name = "   ".to_string();
 
         assert_eq!(form.validate(), Err("Ime je obvezno."));
     }
 
     #[test]
-    fn register_form_rejects_empty_username() {
-        let form = RegisterForm {
-            name: "Ajda".to_string(),
-            username: "".to_string(),
-            email: "ajda@email.si".to_string(),
-            password: "geslo123".to_string(),
-            password_confirmation: "geslo123".to_string(),
-        };
+    fn prazno_uporabnisko_ime_je_zavrnjeno() {
+        let mut form = valid_form();
+        form.username = "   ".to_string();
 
-        assert_eq!(form.validate(), Err("Uporabniško ime je obvezno."));
+        assert_eq!(
+            form.validate(),
+            Err("Uporabniško ime je obvezno.")
+        );
     }
 
     #[test]
-    fn register_form_rejects_invalid_email() {
-        let form = RegisterForm {
-            name: "Ajda".to_string(),
-            username: "ajda".to_string(),
-            email: "ajdaemail.si".to_string(),
-            password: "geslo123".to_string(),
-            password_confirmation: "geslo123".to_string(),
-        };
+    fn napacen_email_je_zavrnjen() {
+        let mut form = valid_form();
+        form.email = "ajda.gmail.com".to_string();
 
-        assert_eq!(form.validate(), Err("Vnesi veljaven e-poštni naslov."));
+        assert_eq!(
+            form.validate(),
+            Err("Vnesi veljaven e-poštni naslov.")
+        );
     }
 
     #[test]
-    fn register_form_rejects_short_password() {
-        let form = RegisterForm {
-            name: "Ajda".to_string(),
-            username: "ajda".to_string(),
-            email: "ajda@email.si".to_string(),
-            password: "geslo".to_string(),
-            password_confirmation: "geslo".to_string(),
-        };
+    fn prekratko_geslo_je_zavrnjeno() {
+        let mut form = valid_form();
+        form.password = "1234567".to_string();
+        form.password_confirmation = "1234567".to_string();
 
         assert_eq!(
             form.validate(),
@@ -420,15 +410,13 @@ mod tests {
     }
 
     #[test]
-    fn register_form_rejects_different_passwords() {
-        let form = RegisterForm {
-            name: "Ajda".to_string(),
-            username: "ajda".to_string(),
-            email: "ajda@email.si".to_string(),
-            password: "geslo123".to_string(),
-            password_confirmation: "geslo456".to_string(),
-        };
+    fn razlicni_gesli_sta_zavrnjeni() {
+        let mut form = valid_form();
+        form.password_confirmation = "drugogeslo".to_string();
 
-        assert_eq!(form.validate(), Err("Gesli se ne ujemata."));
+        assert_eq!(
+            form.validate(),
+            Err("Gesli se ne ujemata.")
+        );
     }
 }
