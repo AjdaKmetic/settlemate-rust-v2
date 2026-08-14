@@ -341,3 +341,93 @@ pub async fn logout_user(State(state): State<AppState>, jar: CookieJar) -> Respo
     (jar, Redirect::to("/login")).into_response()
     
 }
+
+// ====================================
+//               TESTI
+// ====================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_register_form() {
+        let form = RegisterForm {
+            name: "Ajda".to_string(),
+            username: "ajda".to_string(),
+            email: "ajda@email.si".to_string(),
+            password: "geslo123".to_string(),
+            password_confirmation: "geslo123".to_string(),
+        };
+
+        assert_eq!(form.validate(), Ok(()));
+    }
+
+    #[test]
+    fn register_form_rejects_empty_name() {
+        let form = RegisterForm {
+            name: "".to_string(),
+            username: "ajda".to_string(),
+            email: "ajda@email.si".to_string(),
+            password: "geslo123".to_string(),
+            password_confirmation: "geslo123".to_string(),
+        };
+
+        assert_eq!(form.validate(), Err("Ime je obvezno."));
+    }
+
+    #[test]
+    fn register_form_rejects_empty_username() {
+        let form = RegisterForm {
+            name: "Ajda".to_string(),
+            username: "".to_string(),
+            email: "ajda@email.si".to_string(),
+            password: "geslo123".to_string(),
+            password_confirmation: "geslo123".to_string(),
+        };
+
+        assert_eq!(form.validate(), Err("Uporabniško ime je obvezno."));
+    }
+
+    #[test]
+    fn register_form_rejects_invalid_email() {
+        let form = RegisterForm {
+            name: "Ajda".to_string(),
+            username: "ajda".to_string(),
+            email: "ajdaemail.si".to_string(),
+            password: "geslo123".to_string(),
+            password_confirmation: "geslo123".to_string(),
+        };
+
+        assert_eq!(form.validate(), Err("Vnesi veljaven e-poštni naslov."));
+    }
+
+    #[test]
+    fn register_form_rejects_short_password() {
+        let form = RegisterForm {
+            name: "Ajda".to_string(),
+            username: "ajda".to_string(),
+            email: "ajda@email.si".to_string(),
+            password: "geslo".to_string(),
+            password_confirmation: "geslo".to_string(),
+        };
+
+        assert_eq!(
+            form.validate(),
+            Err("Geslo mora vsebovati najmanj 8 znakov.")
+        );
+    }
+
+    #[test]
+    fn register_form_rejects_different_passwords() {
+        let form = RegisterForm {
+            name: "Ajda".to_string(),
+            username: "ajda".to_string(),
+            email: "ajda@email.si".to_string(),
+            password: "geslo123".to_string(),
+            password_confirmation: "geslo456".to_string(),
+        };
+
+        assert_eq!(form.validate(), Err("Gesli se ne ujemata."));
+    }
+}

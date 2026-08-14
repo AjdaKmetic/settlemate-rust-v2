@@ -34,12 +34,12 @@ pub fn verify_password(password: &str, password_hash: &str) -> bool {
     }
 }
 
-// TESTI
+// ================================
+//              TESTI
+// ================================
 #[cfg(test)]
 mod tests {
-    use core::hash;
-
-use super::{hash_password, verify_password}; // uvozimo iz nadrejenega modula
+    use super::{hash_password, verify_password}; // uvozimo iz nadrejenega modula
     use argon2::password_hash::PasswordHash;
     
     #[test]
