@@ -41,13 +41,19 @@ struct RegisterTemplate {
     created: bool,
 }
 
+impl RegisterTemplate {
+    fn new(error_message: &str, created: bool) -> Self {
+        Self {
+            has_error: !error_message.is_empty(),
+            error_message: error_message.to_string(),
+            created,
+        }
+    }
+}
+
 // iz podatkov pripravi HTML odgovor za brskalnik
 fn render_register(status: StatusCode, error_message: &str, created: bool) -> Response {
-    let template = RegisterTemplate {
-        has_error: !error_message.is_empty(),
-        error_message: error_message.to_string(),
-        created,
-    };
+    let template = RegisterTemplate::new(error_message, created);
 
     match template.render() { // Askama (odpre register.html, vstavi vrednosti iz template,) vrne String, ki je HTML - vrne Result<String, Error>
         Ok(html) => (status, Html(html)).into_response(),
@@ -73,6 +79,33 @@ pub struct RegisterForm {
     password_confirmation: String,
 }
 
+impl RegisterForm {
+    // preverjanje pravilnosti obrazca
+    fn validate(&self) -> Result<(), &'static str> {
+        if self.name.trim().is_empty() {
+            return Err("Ime je obvezno.");
+        }
+
+        if self.username.trim().is_empty() {
+            return Err("Uporabniško ime je obvezno.");
+        }
+
+        if !self.email.trim().contains('@') {
+            return Err("Vnesi veljaven e-poštni naslov.");
+        }
+
+        if self.password.chars().count() < 8 {
+            return Err("Geslo mora vsebovati najmanj 8 znakov.");
+        }
+
+        if self.password != self.password_confirmation {
+            return Err("Gesli se ne ujemata.");
+        }
+
+        Ok(())
+    }
+}
+
 // ====================================
 //             handlerja
 // ====================================
@@ -82,50 +115,17 @@ pub async fn register_form() -> Response {
 }
 
 pub async fn register_user(State(state): State<AppState>, Form(form): Form<RegisterForm>) -> Response {
+    if let Err(error_message) = form.validate() {
+        return render_register(
+            StatusCode::BAD_REQUEST,
+            error_message,
+            false,
+        );
+    }
+    
     let name = form.name.trim(); // &str
     let username = form.username.trim().to_lowercase(); // String
     let email = form.email.trim().to_lowercase();
-
-    // pregledamo, če so vpisani podatki veljavni
-    if name.is_empty() {
-        return render_register(
-            StatusCode::BAD_REQUEST,
-            "Ime je obvezno.",
-            false,
-        );
-    }
-
-    if username.is_empty() {
-        return render_register(
-            StatusCode::BAD_REQUEST,
-            "Uporabniško ime je obvezno.",
-            false,
-        );
-    }
-
-    if !email.contains('@') {
-        return render_register(
-            StatusCode::BAD_REQUEST,
-            "Vnesi veljaven e-poštni naslov.",
-            false,
-        );
-    }
-
-    if form.password.chars().count() < 8 {
-        return render_register(
-            StatusCode::BAD_REQUEST,
-            "Geslo mora vsebovati najmanj 8 znakov.",
-            false,
-        );
-    }
-
-    if form.password != form.password_confirmation {
-        return render_register(
-            StatusCode::BAD_REQUEST,
-            "Gesli se ne ujemata.",
-            false,
-        );
-    }
 
     // preverimo, ali ta uporabnik že obstaja
     match find_user_by_username(&state.db, &username).await {
@@ -203,11 +203,17 @@ struct LoginTemplate {
     error_message: String,
 }
 
+impl LoginTemplate {
+    fn new(error_message: &str) -> Self {
+        Self {
+            has_error: !error_message.is_empty(),
+            error_message: error_message.to_string(),
+        }
+    }
+}
+
 fn render_login(status: StatusCode, error_message: &str) -> Response {
-    let template = LoginTemplate {
-        has_error: !error_message.is_empty(),
-        error_message: error_message.to_string(),
-    };
+    let template = LoginTemplate::new(error_message);
 
     match template.render() {
         Ok(html) => (status, Html(html)).into_response(),

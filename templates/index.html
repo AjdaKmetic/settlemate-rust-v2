@@ -58,7 +58,7 @@
 
     <main class="container">
 
-        <div class="balance-card balance-neutral">
+        <div class="balance-card {{ balance_state_class }}">
             <div class="balance-icon">
                 <svg
                     class="icon-text"
@@ -77,9 +77,8 @@
             </div>
 
             <div>
-                <p class="balance-label">Skupno stanje</p>
-                <p class="balance-amount">€0.00</p>
-                <p class="balance-secondary">Ni neporavnanih stroškov</p>
+                <p class="balance-label">{{ balance_label }}</p>
+                <p class="balance-amount">{{ formatted_balance }}</p>
             </div>
         </div>
 

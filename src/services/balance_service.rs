@@ -12,10 +12,7 @@ use crate::entities::{
 };
 
 // izračun skupnega stanja uporabnika
-pub async fn get_balance(
-    db: &DatabaseConnection,
-    user_id: i32,
-) -> Result<i64, sea_orm::DbErr> {
+pub async fn get_balance(db: &DatabaseConnection, user_id: i32) -> Result<i64, sea_orm::DbErr> {
 
     // stroški, ki jih je uporabnik plačal
     let paid_expenses = expenses::Entity::find()
@@ -61,10 +58,5 @@ pub async fn get_balance(
         .map(|payment| payment.amount_cents)
         .sum();
 
-    Ok(
-        paid_cents
-            - owed_cents
-            + sent_cents
-            - received_cents
-    )
+    Ok(paid_cents - owed_cents + sent_cents - received_cents)
 }
