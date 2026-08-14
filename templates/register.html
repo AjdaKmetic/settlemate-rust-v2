@@ -9,9 +9,8 @@
 <body>
     <main class="auth-page">
         <section class="auth-card">
-            <h1>Ustvari račun</h1>
-            <p class="auth-subtitle">
-                Registriraj se za uporabo aplikacije SettleMate.
+            <p class="auth-intro">
+                 Za uporabo aplikacije SettleMate ustvari račun.
             </p>
 
             {% if created %}
@@ -84,6 +83,11 @@
                         Ustvari račun
                     </button>
                 </form>
+                
+                <p class="auth-link">
+                    Že imaš račun?
+                    <a href="/login">Prijavi se</a>
+                </p>
             {% endif %}
         </section>
     </main>

@@ -698,3 +698,22 @@ body {
     background: var(--balance-positive-bg);
     border: 1px solid var(--balance-positive-border);
 }
+
+.auth-intro {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--color-text);
+}
+
+.auth-link {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--color-muted);
+}
+
+.auth-link a {
+    color: var(--color-primary);
+    font-weight: 600;
+}

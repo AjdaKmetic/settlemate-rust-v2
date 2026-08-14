@@ -6,44 +6,52 @@
     <title>Prijava – SettleMate</title> <!--naslov browserjevega zavihka-->
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="auth-page">
-    <main class="auth-card">
-        <h1>Prijava</h1>
-        <p>Prijavi se v svoj SettleMate račun.</p>
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <p class="auth-intro">
+                Za uporabo aplikacije SettleMate se prijavi.
+            </p>
 
-        {% if has_error %}
-        <p class="auth-error">{{ error_message }}</p>
-        {% endif %}
+            {% if has_error %}
+                <p class="auth-error">{{ error_message }}</p>
+            {% endif %}
 
-        <!--obrazec, ki ga uporabnik na koncu odda-->
-        <form class="auth-form" action="/login" method="post">
-            <label for="login">Uporabniško ime ali e-pošta</label>
-            <input
-                id="login"
-                name="login"
-                type="text"
-                autocomplete="username"
-                required
-            >
+            <form class="auth-form" action="/login" method="post">
+                <label for="login">
+                    Uporabniško ime ali e-pošta
+                </label>
 
-            <label for="password">Geslo</label>
-            <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                required
-            >
+                <input
+                    id="login"
+                    name="login"
+                    type="text"
+                    autocomplete="username"
+                    required
+                >
 
-            <button class="btn-create" type="submit">
-                Prijava
-            </button>
-        </form>
+                <label for="password">
+                    Geslo
+                </label>
 
-        <p class="auth-link">
-            Še nimaš računa?
-            <a href="/register">Registriraj se</a>
-        </p>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button class="btn-create" type="submit">
+                    Prijava
+                </button>
+            </form>
+
+            <p class="auth-link">
+                Še nimaš računa?
+                <a href="/register">Registriraj se</a>
+            </p>
+        </section>
     </main>
 </body>
 </html>
