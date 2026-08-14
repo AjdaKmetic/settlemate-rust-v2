@@ -33,3 +33,55 @@ pub fn verify_password(password: &str, password_hash: &str) -> bool {
         Err(_) => false,
     }
 }
+
+// TESTI
+#[cfg(test)]
+mod tests {
+    use core::hash;
+
+use super::{hash_password, verify_password}; // uvozimo iz nadrejenega modula
+    use argon2::password_hash::PasswordHash;
+    
+    #[test]
+    fn hash_password_naredi_ustrezen_hash() {
+        let password = "varnogeslo123";
+
+        let hash = hash_password(password);
+
+        assert_ne!(hash, password); // nista enaka
+        assert!(PasswordHash::new(&hash).is_ok());
+    }
+
+    #[test]
+    fn verify_password_sprejme_pravilno_geslo() {
+        let password = "pravilnogeslo123";
+        let hash = hash_password(password);
+
+        assert!(verify_password(password, &hash));
+    }
+
+    #[test]
+    fn verify_password_zavrne_napacno_geslo() {
+        let password = "pravilnogeslo123";
+        let hash = hash_password(password);
+
+        assert!(!verify_password("napacnogeslo123", &hash))
+    }
+
+    #[test]
+    fn verify_password_zavrne_neveljaven_hash() {
+        assert!(!verify_password("varnogeslo123", "neveljavenhash"))
+    }
+
+    #[test]
+    fn isto_geslo_da_druge_hashe() {
+        let password = "varnogeslo123";
+
+        let first_hash = hash_password(password);
+        let second_hash = hash_password(password);
+
+        assert_ne!(first_hash, second_hash);
+        assert!(verify_password(password, &first_hash));
+        assert!(verify_password(password, &second_hash));
+    }
+}
