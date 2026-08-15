@@ -31,6 +31,13 @@ impl MigrationTrait for Migration {
                             .to(Users::Table, Users::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
+                    .index(
+                        Index::create()
+                            .name("idx-friendships-user-friend")
+                            .col(Friendships::UserId)
+                            .col(Friendships::FriendId)
+                            .unique(),
+                    )
                     .to_owned(),
             )
             .await?;

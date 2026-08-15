@@ -1,0 +1,31 @@
+<form
+    id="friends-panel"
+    class="friend-form"
+    hx-post="/friends"
+    hx-target="#friends-panel"
+    hx-swap="outerHTML"
+>
+    <input
+        type="text"
+        name="username"
+        placeholder="Uporabniško ime"
+        required
+    >
+
+    <button
+        class="primary-button"
+        type="submit"
+    >
+        Dodaj
+    </button>
+
+    <button
+        class="secondary-button"
+        type="button"
+        hx-get="/tabs/friends"
+        hx-target="#tab-shell"
+        hx-swap="outerHTML"
+    >
+        Prekliči
+    </button>
+</form>

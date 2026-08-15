@@ -58,6 +58,8 @@
 
     <main class="container">
 
+        <!-- skupno stanje -->
+
         <div class="balance-card {{ balance_state_class }}">
             <div class="balance-icon">
                 <svg
@@ -82,23 +84,80 @@
             </div>
         </div>
 
-    </main>
+        <!-- zavihki -->
 
-    <footer class="footer">
-        <svg
-            class="icon-muted"
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-        >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-        </svg>
+        <div class="tabs">
+            <button class="tab active">
+                Prijatelji
+            </button>
 
-        Split expenses. Stay friends.
-    </footer>
+            <button class="tab">
+                Skupine
+            </button>
+
+            <button class="tab">
+                Aktivnost
+            </button>
+        </div>
+
+        <!-- prijatelji -->
+
+        <div class="content-card">
+
+            <div class="content-header">
+                <h2>Prijatelji</h2>
+
+                <button
+                    class="primary-button"
+                    hx-get="/friends/form"
+                    hx-target="#friend-form-container"
+                    hx-swap="innerHTML"
+                >
+                    + Dodaj prijatelja
+                </button>
+            </div>
+
+            <div id="friend-form-container"></div>
+
+            <!-- seznam prijateljev -->
+
+            {% if friends.is_empty() %}
+
+                <p class="empty-message">
+                    Nimaš še dodanih prijateljev.
+                </p>
+
+            {% else %}
+
+                <div class="friends-list">
+
+                    {% for friend in friends %}
+
+                        <div class="friend-row">
+
+                            <div class="friend-avatar">
+                                {{ friend.name.chars().next().unwrap_or('?') }}
+                            </div>
+
+                            <div>
+                                <p class="friend-name">
+                                    {{ friend.name }}
+                                </p>
+
+                                <p class="friend-username">
+                                    @{{ friend.username }}
+                                </p>
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
 
 </body>
 </html>

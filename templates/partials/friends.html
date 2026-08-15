@@ -1,0 +1,48 @@
+<div id="friends-panel">
+
+    <div class="content-header">
+        <h2>Prijatelji</h2>
+
+        <button
+            type="button"
+            class="primary-button"
+            hx-get="/friends/form"
+            hx-target="#friends-panel"
+            hx-swap="outerHTML"
+        >
+            + Dodaj prijatelja
+        </button>
+    </div>
+
+    {% if friends.is_empty() %}
+
+        <p class="empty-message">
+            Nimaš še dodanih prijateljev.
+        </p>
+
+    {% else %}
+
+        <div class="friends-list">
+
+            {% for friend in friends %}
+
+                <div class="friend-row">
+
+                    <div class="friend-avatar">
+                        {{ friend.name.chars().next().unwrap_or('?') }}
+                    </div>
+
+                    <div>
+                        <p class="friend-name">{{ friend.name }}</p>
+                        <p class="friend-username">@{{ friend.username }}</p>
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+</div>

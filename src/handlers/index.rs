@@ -10,8 +10,12 @@ use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
     app::state::AppState,
+    entities::users,
     handlers::auth::get_current_user,
-    services::balance_service::get_balance,
+    services::{
+        balance_service::get_balance,
+        friend_service::get_friends,
+    },
 };
 
 // Askama
@@ -22,10 +26,11 @@ struct IndexTemplate {
     balance_state_class: &'static str,
     balance_label: &'static str,
     formatted_balance: String,
+    friends: Vec<users::Model>,
 }
 
 impl IndexTemplate {
-    fn new(username: String, balance_cents: i64) -> Self {
+    fn new(username: String, balance_cents: i64, friends: Vec<users::Model>) -> Self {
         let (balance_state_class, balance_label) =
             if balance_cents > 0 {
                 (
@@ -55,6 +60,7 @@ impl IndexTemplate {
             balance_state_class,
             balance_label,
             formatted_balance,
+            friends,
         }
     }
 }
@@ -83,6 +89,20 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         }
     };
 
+    let friends = match get_friends(&state.db, user.id).await {
+        Ok(friends) => friends,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu začetne strani je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
     let balance_cents = match get_balance(&state.db, user.id).await {
         Ok(balance) => balance,
 
@@ -97,7 +117,7 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         }
     };
 
-    let template = IndexTemplate::new(user.username, balance_cents);
+    let template = IndexTemplate::new(user.username, balance_cents, friends);
 
     match template.render() {
         Ok(html) => Html(html).into_response(), // = (StatusCode::OK, Html(html)).into_response()

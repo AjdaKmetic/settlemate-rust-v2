@@ -26,6 +26,13 @@ impl MigrationTrait for Migration {
                             .to(Users::Table, Users::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
+                    .index(
+                        Index::create()
+                            .name("idx-group-members-group-user")
+                            .col(GroupMembers::GroupId)
+                            .col(GroupMembers::UserId)
+                            .unique(),
+                    )
                     .to_owned(),
             )
             .await?;

@@ -110,8 +110,9 @@ impl RegisterForm {
 //             handlerja
 // ====================================
 
+// izdela register.html z obrazcem za registracijo
 pub async fn register_form() -> Response {
-    render_register(StatusCode::OK, "", false) // izdela register.html z obrazcem za registracijo
+    render_register(StatusCode::OK, "", false)
 }
 
 pub async fn register_user(State(state): State<AppState>, Form(form): Form<RegisterForm>) -> Response {

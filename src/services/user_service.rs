@@ -10,13 +10,7 @@ use users::Entity as Users;
 // ========================
 
 // shranjevanje uporabnika v bazo
-pub async fn create_user(
-    db: &DatabaseConnection,
-    name: &str,
-    username: &str,
-    email: &str,
-    password: &str,
-) -> Result<users::Model, sea_orm::DbErr> {
+pub async fn create_user(db: &DatabaseConnection, name: &str, username: &str, email: &str, password: &str) -> Result<users::Model, sea_orm::DbErr> {
     let password_hash = hash_password(password);
     let new_user = users::ActiveModel {
         name: Set(name.to_string()),
@@ -30,27 +24,18 @@ pub async fn create_user(
 }
 
 // iskanje uporabnika v bazi
-pub async fn find_user_by_username(
-    db: &DatabaseConnection,
-    username: &str,
-) -> Result<Option<users::Model>, sea_orm::DbErr> {
+pub async fn find_user_by_username(db: &DatabaseConnection, username: &str) -> Result<Option<users::Model>, sea_orm::DbErr> {
     Users::find()
         .filter(users::Column::Username.eq(username))
         .one(db)
         .await
 }
 
-pub async fn find_user_by_id(
-    db: &DatabaseConnection,
-    id: i32,
-) -> Result<Option<users::Model>, sea_orm::DbErr> {
+pub async fn find_user_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<users::Model>, sea_orm::DbErr> {
     Users::find_by_id(id).one(db).await
 }
 
-pub async fn find_user_by_email(
-    db: &DatabaseConnection,
-    email: &str,
-) -> Result<Option<users::Model>, sea_orm::DbErr> {
+pub async fn find_user_by_email(db: &DatabaseConnection, email: &str) -> Result<Option<users::Model>, sea_orm::DbErr> {
     Users::find()
         .filter(users::Column::Email.eq(email))
         .one(db)
@@ -58,11 +43,7 @@ pub async fn find_user_by_email(
 }
 
 // preverjanje identitete uporabnika (z emailom ali uporabniškim imenom)
-pub async fn verify_user_credentials( 
-    db: &DatabaseConnection,
-    login: &str,
-    password: &str,
-) -> Result<Option<users::Model>, sea_orm::DbErr> {
+pub async fn verify_user_credentials(db: &DatabaseConnection, login: &str, password: &str) -> Result<Option<users::Model>, sea_orm::DbErr> {
     let user = if login.contains('@') {
         find_user_by_email(db, login).await? // ? vrne Option<users::Model>, če je Result = Ok(...), sicer vrne Err(e)
     } else {
