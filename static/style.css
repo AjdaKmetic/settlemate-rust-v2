@@ -534,7 +534,7 @@ body {
         padding: 0 18px;
     }
 
-    .nav-user span {
+    .nav-username {
         display: none;
     }
 
@@ -716,4 +716,66 @@ body {
 .auth-link a {
     color: var(--color-primary);
     font-weight: 600;
+}
+
+.account-menu {
+    position: relative;
+}
+
+.account-menu summary {
+    list-style: none;
+}
+
+.account-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.account-chevron {
+    transition: transform 0.15s;
+}
+
+.account-menu[open] .account-chevron {
+    transform: rotate(180deg);
+}
+
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 100;
+    min-width: 160px;
+    padding: 6px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px var(--color-shadow);
+}
+
+.account-dropdown form {
+    margin: 0;
+}
+
+.account-menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.account-menu-item:hover {
+    background: var(--color-background);
+    color: var(--color-primary);
+}
+
+.account-divider {
+    margin: 28px 0;
+    border: none;
+    border-top: 1px solid var(--color-border);
 }

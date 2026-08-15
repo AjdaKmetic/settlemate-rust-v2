@@ -134,7 +134,6 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
     }
 }
 
-
 // TESTI
 
 #[cfg(test)]

@@ -1,8 +1,6 @@
-use crate::services::password_service::{hash_password, verify_password};
 use crate::entities::users;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
-};
+use crate::services::password_service::{hash_password, verify_password};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use users::Entity as Users;
 
 // ========================
@@ -61,4 +59,32 @@ pub async fn verify_user_credentials(db: &DatabaseConnection, login: &str, passw
         }
         None => Ok(None),
     }
+}
+
+// sprememba imena uporabnika
+pub async fn update_user_name(db: &DatabaseConnection, user_id: i32, name: &str) -> Result<users::Model, sea_orm::DbErr> {
+    let user = users::ActiveModel {
+        id: Set(user_id),
+        name: Set(name.trim().to_string()),
+        ..Default::default()
+    };
+
+    user.update(db).await
+}
+
+// sprememba gesla uporabnika
+pub async fn update_user_password(db: &DatabaseConnection,
+    user_id: i32,
+    new_password: &str, // prejme novo geslo
+) -> Result<users::Model, sea_orm::DbErr> {
+    let password_hash = hash_password(new_password); // pretvori v hash
+
+    let user = users::ActiveModel {
+        // poisce se uporabnik
+        id: Set(user_id),
+        password_hash: Set(password_hash), // spremeni se samo geslo
+        ..Default::default()
+    };
+
+    user.update(db).await
 }

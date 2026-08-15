@@ -1,11 +1,6 @@
 use argon2::{
     Argon2,
-    password_hash::{
-        PasswordHash,
-        PasswordHasher,
-        PasswordVerifier,
-        SaltString,
-    },
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
 
 use rand_core::OsRng;
@@ -41,7 +36,7 @@ pub fn verify_password(password: &str, password_hash: &str) -> bool {
 mod tests {
     use super::{hash_password, verify_password}; // uvozimo iz nadrejenega modula
     use argon2::password_hash::PasswordHash;
-    
+
     #[test]
     fn hash_password_naredi_ustrezen_hash() {
         let password = "varnogeslo123";

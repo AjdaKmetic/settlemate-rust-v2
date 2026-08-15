@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Moj račun · SettleMate</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <p class="auth-intro">
+                Moj račun
+            </p>
+<!-- readonly - uporabnik lahko vrednost vidi, ne more pa je spreminjati -->
+            <form
+                class="auth-form"
+                method="post"
+                action="/account/name"
+            >
+                <label>
+                    Ime
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ name }}"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Uporabniško ime
+                    <input
+                        type="text"
+                        value="{{ username }}"
+                        readonly
+                    >
+                </label>
+
+                <label>
+                    E-pošta
+                    <input
+                        type="email"
+                        value="{{ email }}"
+                        readonly
+                    >
+                </label>
+                <button
+                    class="btn-create"
+                    type="submit"
+                >
+                    Shrani ime
+                </button>
+            </forn>
+
+            <hr class="account-divider">
+
+<p class="auth-intro">
+    Spremeni geslo
+</p>
+
+<form
+    class="auth-form"
+    method="post"
+    action="/account/password"
+>
+    <label>
+        Trenutno geslo
+
+        <input
+            type="password"
+            name="current_password"
+            autocomplete="current-password"
+            required
+        >
+    </label>
+
+    <label>
+        Novo geslo
+
+        <input
+            type="password"
+            name="new_password"
+            minlength="8"
+            autocomplete="new-password"
+            required
+        >
+    </label>
+
+    <label>
+        Ponovi novo geslo
+
+        <input
+            type="password"
+            name="new_password_confirmation"
+            minlength="8"
+            autocomplete="new-password"
+            required
+        >
+    </label>
+
+    <button
+        class="btn-create"
+        type="submit"
+    >
+        Spremeni geslo
+    </button>
+</form>
+
+            <p class="auth-link">
+                <a href="/">← Nazaj na začetno stran</a>
+            </p>
+        </section>
+    </main>
+</body>
+</html>

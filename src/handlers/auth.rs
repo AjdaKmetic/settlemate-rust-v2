@@ -2,10 +2,10 @@
 
 use askama::Template;
 use axum::{
+    Form,
     extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
-    Form,
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use serde::Deserialize;
@@ -14,16 +14,9 @@ use crate::{
     app::state::AppState,
     entities::users,
     services::{
-        session_service::{
-            create_session,
-            delete_session,
-            find_session_by_token,
-        },   
+        session_service::{create_session, delete_session, find_session_by_token},
         user_service::{
-            create_user,
-            find_user_by_email,
-            find_user_by_id,
-            find_user_by_username,
+            create_user, find_user_by_email, find_user_by_id, find_user_by_username,
             verify_user_credentials,
         },
     },
@@ -55,7 +48,8 @@ impl RegisterTemplate {
 fn render_register(status: StatusCode, error_message: &str, created: bool) -> Response {
     let template = RegisterTemplate::new(error_message, created);
 
-    match template.render() { // Askama (odpre register.html, vstavi vrednosti iz template,) vrne String, ki je HTML - vrne Result<String, Error>
+    match template.render() {
+        // Askama (odpre register.html, vstavi vrednosti iz template,) vrne String, ki je HTML - vrne Result<String, Error>
         Ok(html) => (status, Html(html)).into_response(),
 
         Err(error) => {
@@ -115,15 +109,14 @@ pub async fn register_form() -> Response {
     render_register(StatusCode::OK, "", false)
 }
 
-pub async fn register_user(State(state): State<AppState>, Form(form): Form<RegisterForm>) -> Response {
+pub async fn register_user(
+    State(state): State<AppState>,
+    Form(form): Form<RegisterForm>,
+) -> Response {
     if let Err(error_message) = form.validate() {
-        return render_register(
-            StatusCode::BAD_REQUEST,
-            error_message,
-            false,
-        );
+        return render_register(StatusCode::BAD_REQUEST, error_message, false);
     }
-    
+
     let name = form.name.trim(); // &str
     let username = form.username.trim().to_lowercase(); // String
     let email = form.email.trim().to_lowercase();
@@ -190,7 +183,6 @@ pub async fn register_user(State(state): State<AppState>, Form(form): Form<Regis
             )
         }
     }
-
 }
 
 // ====================================
@@ -245,7 +237,11 @@ pub async fn login_form() -> Response {
     render_login(StatusCode::OK, "")
 }
 
-pub async fn login_user(State(state): State<AppState>, jar: CookieJar, Form(form): Form<LoginForm>) -> Response {
+pub async fn login_user(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<LoginForm>,
+) -> Response {
     let login = form.login.trim().to_lowercase();
 
     let user = match verify_user_credentials(&state.db, &login, &form.password).await {
@@ -293,7 +289,10 @@ pub async fn login_user(State(state): State<AppState>, jar: CookieJar, Form(form
 //    TRENUTNO PRIJAVLJEN UPORABNIK
 // ====================================
 
-pub async fn get_current_user(state: &AppState, jar: &CookieJar) -> Result<Option<users::Model>, sea_orm::DbErr> {
+pub async fn get_current_user(
+    state: &AppState,
+    jar: &CookieJar,
+) -> Result<Option<users::Model>, sea_orm::DbErr> {
     let cookie = match jar.get("settlemate_session") {
         Some(cookie) => cookie,
         None => return Ok(None),
@@ -340,9 +339,7 @@ pub async fn logout_user(State(state): State<AppState>, jar: CookieJar) -> Respo
     let jar = jar.remove(Cookie::from("settlemate_session"));
 
     (jar, Redirect::to("/login")).into_response()
-    
 }
-
 
 // TESTI
 
@@ -380,10 +377,7 @@ mod tests {
         let mut form = valid_form();
         form.username = "   ".to_string();
 
-        assert_eq!(
-            form.validate(),
-            Err("Uporabniško ime je obvezno.")
-        );
+        assert_eq!(form.validate(), Err("Uporabniško ime je obvezno."));
     }
 
     #[test]
@@ -391,10 +385,7 @@ mod tests {
         let mut form = valid_form();
         form.email = "ajda.gmail.com".to_string();
 
-        assert_eq!(
-            form.validate(),
-            Err("Vnesi veljaven e-poštni naslov.")
-        );
+        assert_eq!(form.validate(), Err("Vnesi veljaven e-poštni naslov."));
     }
 
     #[test]
@@ -414,9 +405,6 @@ mod tests {
         let mut form = valid_form();
         form.password_confirmation = "drugogeslo".to_string();
 
-        assert_eq!(
-            form.validate(),
-            Err("Gesli se ne ujemata.")
-        );
+        assert_eq!(form.validate(), Err("Gesli se ne ujemata."));
     }
 }

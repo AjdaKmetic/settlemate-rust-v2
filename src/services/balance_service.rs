@@ -1,15 +1,6 @@
-use sea_orm::{
-    ColumnTrait,
-    DatabaseConnection,
-    EntityTrait,
-    QueryFilter,
-};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::entities::{
-    expense_splits,
-    expenses,
-    payments,
-};
+use crate::entities::{expense_splits, expenses, payments};
 
 fn calculate_balance(
     paid_cents: i64,
@@ -22,7 +13,6 @@ fn calculate_balance(
 
 // izračun skupnega stanja uporabnika
 pub async fn get_balance(db: &DatabaseConnection, user_id: i32) -> Result<i64, sea_orm::DbErr> {
-
     // stroški, ki jih je uporabnik plačal
     let paid_expenses = expenses::Entity::find()
         .filter(expenses::Column::PaidBy.eq(user_id))
@@ -52,10 +42,7 @@ pub async fn get_balance(db: &DatabaseConnection, user_id: i32) -> Result<i64, s
         .map(|expense| expense.amount_cents)
         .sum();
 
-    let owed_cents: i64 = user_splits
-        .iter()
-        .map(|split| split.amount_cents)
-        .sum();
+    let owed_cents: i64 = user_splits.iter().map(|split| split.amount_cents).sum();
 
     let sent_cents: i64 = sent_payments
         .iter()
@@ -68,12 +55,12 @@ pub async fn get_balance(db: &DatabaseConnection, user_id: i32) -> Result<i64, s
         .sum();
 
     Ok(calculate_balance(
-        paid_cents, 
-        owed_cents, 
-        sent_cents, 
-        received_cents))
+        paid_cents,
+        owed_cents,
+        sent_cents,
+        received_cents,
+    ))
 }
-
 
 // TESTI
 

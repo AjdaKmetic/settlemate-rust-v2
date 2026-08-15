@@ -4,13 +4,14 @@ mod handlers;
 mod services;
 
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 use sea_orm::Database;
 
 use app::state::AppState;
 use handlers::{
+    account::{account_page, change_password, update_name},
     auth::{
         login_form,
         login_user,
@@ -44,6 +45,9 @@ async fn main() {
         .route("/tabs/friends", get(friends_tab))
         .route("/friends/form", get(friend_form))
         .route("/friends", post(add_friend_handler))
+        .route("/account", get(account_page))
+        .route("/account/name", post(update_name))
+        .route("/account/password", post(change_password))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 
