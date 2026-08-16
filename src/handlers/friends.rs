@@ -53,59 +53,6 @@ impl AddFriendForm {
 //            handlerji
 // ====================================
 
-// prikaz prijateljev
-pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Response {
-    let user = match get_current_user(&state, &jar).await {
-        Ok(Some(user)) => user,
-
-        Ok(None) => {
-            return Redirect::to("/login").into_response();
-        }
-
-        Err(error) => {
-            eprintln!("Napaka pri preverjanju prijavljenega uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
-        }
-    };
-
-    let friends = match get_friends(&state.db, user.id).await {
-        Ok(friends) => friends,
-
-        Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
-        }
-    };
-
-    let template = FriendsTemplate {
-        friends,
-    };
-
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
-
-        Err(error) => {
-            eprintln!("Napaka pri izrisu prijateljev: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response()
-        }
-    }
-}
-
 // prikaz obrazca
 pub async fn friend_form() -> Response {
     let template = FriendFormTemplate;

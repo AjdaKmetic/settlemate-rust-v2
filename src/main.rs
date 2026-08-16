@@ -22,7 +22,6 @@ use handlers::{
     friends::{
         add_friend_handler,
         friend_form,
-        friends_tab,
     },
     index::index,
     expenses::{
@@ -31,6 +30,11 @@ use handlers::{
         create_expense_handler,
         activity_tab
     }
+    tabs::{
+        activity_tab,
+        friends_tab,
+        groups_tab,
+    },
 };
 
 use tower_http::services::ServeDir;
@@ -49,6 +53,8 @@ async fn main() {
         .route("/login", get(login_form).post(login_user))
         .route("/logout", post(logout_user))
         .route("/tabs/friends", get(friends_tab))
+        .route("/tabs/groups", get(groups_tab))
+        .route("/tabs/activity", get(activity_tab))
         .route("/friends/form", get(friend_form))
         .route("/friends", post(add_friend_handler))
         .route("/account", get(account_page))

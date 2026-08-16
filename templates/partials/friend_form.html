@@ -1,11 +1,11 @@
-<div id="friends-panel" class="content-card">
+<div id="friends-panel" class="tab-panel">
 
-    <div class="content-header">
+    <div class="section-header">
         <h2>Dodaj prijatelja</h2>
     </div>
 
     <form
-        class="friend-form"
+        class="inline-form"
         hx-post="/friends"
         hx-target="#friends-panel"
         hx-swap="outerHTML"
@@ -19,16 +19,16 @@
 
         <button
             type="submit"
-            class="primary-button"
+            class="btn-create"
         >
             Dodaj
         </button>
 
         <button
             type="button"
-            class="secondary-button"
+            class="btn-cancel"
             hx-get="/tabs/friends"
-            hx-target="#friends-panel"
+            hx-target="#tab-shell"
             hx-swap="outerHTML"
         >
             Prekliči
