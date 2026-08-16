@@ -9,17 +9,20 @@
 <body>
     <main class="auth-page">
         <section class="auth-card">
-            <p class="auth-intro">
-                 Za uporabo aplikacije SettleMate ustvari račun.
-            </p>
-
             {% if created %}
                 <div class="auth-success">
                     Račun je bil uspešno ustvarjen.
-                    <a href="/login">Prijavi se.</a>
                 </div>
+
+                <p class="auth-link">
+                    <a href="/login">Prijavi se</a>
+                </p>
             {% else %}
-            
+
+                <p class="auth-intro">
+                    Za uporabo aplikacije SettleMate ustvari račun.
+                </p>
+
                 {% if has_error %}
                     <div class="auth-error">
                         {{ error_message }}

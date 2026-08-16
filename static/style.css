@@ -189,7 +189,7 @@ body {
 
 .balance-secondary,
 .secondary-text {
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     font-family: 'Inter', sans-serif;
     color: var(--balance-secondary, var(--balance-neutral-label));
 }
@@ -290,6 +290,7 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 16px;
+    min-height: 36px; /* enaka višina naslova tudi brez gumba */
     margin-bottom: 14px;
 }
 
@@ -633,6 +634,19 @@ body {
     border-color: var(--color-primary);
 }
 
+.confirm-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 12px;
+}
+
+.confirm-message {
+    font-size: 0.9rem;
+    color: var(--color-muted);
+    margin-bottom: 24px;
+}
+
 .auth-page {
     width: 100%;
     max-width: 440px;
@@ -737,6 +751,10 @@ body {
     display: none;
 }
 
+.form-actions .nav-user:hover .avatar {
+    border-color: var(--color-border-strong);
+}
+
 .account-chevron {
     transition: transform 0.15s;
 }
@@ -774,6 +792,7 @@ body {
     text-align: left;
     text-decoration: none;
     cursor: pointer;
+    font-size: 0.9rem;
 }
 
 .account-menu-item:hover {

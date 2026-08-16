@@ -26,9 +26,13 @@ use handlers::{
     groups::{
         add_group_member_handler,
         create_group_handler,
+        delete_group_handler,
+        group_delete_form,
         group_detail,
         group_form,
+        group_leave_form,
         group_member_form,
+        leave_group_handler,
     },
     expenses::{
         close_expense_form,
@@ -69,6 +73,10 @@ async fn main() {
         .route("/groups/{id}", get(group_detail))
         .route("/groups/{id}/members/form", get(group_member_form))
         .route("/groups/{id}/members", post(add_group_member_handler))
+        .route("/groups/{id}/leave/form", get(group_leave_form))
+        .route("/groups/{id}/leave", post(leave_group_handler))
+        .route("/groups/{id}/delete/form", get(group_delete_form))
+        .route("/groups/{id}/delete", post(delete_group_handler))
         .route("/account", get(account_page))
         .route("/account/name", post(update_name))
         .route("/account/password", post(change_password))

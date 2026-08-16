@@ -2,6 +2,7 @@ use sea_orm::{
     ActiveModelTrait,
     ColumnTrait,
     DatabaseConnection,
+    DeleteResult,
     EntityTrait,
     QueryFilter,
     Set,
@@ -55,8 +56,23 @@ pub async fn find_group_by_id(db: &DatabaseConnection, group_id: i32) -> Result<
         .await
 }
 
+// odstranitev uporabnika iz skupine
+pub async fn remove_member_from_group(db: &DatabaseConnection, group_id: i32, user_id: i32) -> Result<DeleteResult, sea_orm::DbErr> {
+    group_members::Entity::delete_many()
+        .filter(group_members::Column::GroupId.eq(group_id))
+        .filter(group_members::Column::UserId.eq(user_id))
+        .exec(db)
+        .await
+}
+
+// brisanje skupine
+pub async fn delete_group(db: &DatabaseConnection, group_id: i32) -> Result<DeleteResult, sea_orm::DbErr> {
+    groups::Entity::delete_many()
+        .filter(groups::Column::Id.eq(group_id))
+        .exec(db)
+        .await
+}
+
 /*
-delete_group(...)
 update_group_name(...)
-remove_member_from_group(...)
 */

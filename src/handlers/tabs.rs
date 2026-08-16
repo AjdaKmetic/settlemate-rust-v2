@@ -8,6 +8,7 @@ use axum::{
     response::{Html, IntoResponse, Redirect, Response},
 };
 use axum_extra::extract::cookie::CookieJar;
+use std::collections::HashMap;
 
 use crate::{
     app::state::AppState,
@@ -24,6 +25,7 @@ use crate::{
         expense_service::get_expenses_for_user,
         friend_service::get_friends,
         group_service::get_groups_for_user,
+        user_service::find_users_by_ids,
     },
 };
 
@@ -200,11 +202,35 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
         }
     };
 
+    // imena plačnikov pridobimo s poizvedbo
+    let mut payer_ids: Vec<i32> = expenses.iter().map(|expense| expense.paid_by).collect();
+    payer_ids.sort();
+    payer_ids.dedup();
+
+    let payers = match find_users_by_ids(&state.db, payer_ids).await {
+        Ok(payers) => payers,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju plačnikov: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu aktivnosti je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let payer_names: HashMap<i32, String> = payers
+        .into_iter()
+        .map(|payer| (payer.id, payer.name))
+        .collect();
+
     let template = TabShellTemplate {
         active_tab: "activity",
         friends: Vec::new(), // Askama zahteva polje friends v vseh vejah
         groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
-        activities: build_activities(expenses, user.id),
+        activities: build_activities(expenses, user.id, &payer_names),
     };
 
     match template.render() {

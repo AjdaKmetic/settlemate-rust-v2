@@ -4,12 +4,12 @@
     </div>
 
     {% if activities.is_empty() %}
-        <p class="empty-state">
-            Ni še zabeleženih stroškov.
-        </p>
+        <div class="empty-state">
+            <p class="secondary-text">Nimaš še zabeleženih stroškov.</p>
+        </div>
     {% else %}
         {% for activity in activities %}
-            <div class="list-row">
+            <div class="list-row{% if loop.last %} last{% endif %}">
                 <div class="activity-icon">
                     €
                 </div>
@@ -20,11 +20,7 @@
                     </p>
 
                     <p class="row-meta">
-                        {% if activity.paid_by_current_user %}
-                            Plačnik: ti
-                        {% else %}
-                            Plačnik: prijatelj
-                        {% endif %}
+                        Plačnik: {{ activity.payer_label }}
                     </p>
                 </div>
 

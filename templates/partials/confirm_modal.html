@@ -1,0 +1,28 @@
+<div class="modal-overlay">
+    <section class="modal-card">
+        <p class="confirm-title">{{ title }}</p>
+        <p class="confirm-message">{{ message }}</p>
+
+        <div class="form-actions">
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-get="/expenses/close"
+                hx-target="#modal-root"
+                hx-swap="innerHTML"
+            >
+                {{ cancel_label }}
+            </button>
+
+            <button
+                type="button"
+                class="btn-create"
+                hx-post="{{ confirm_url }}"
+                hx-target="{{ confirm_target }}"
+                hx-swap="outerHTML"
+            >
+                {{ confirm_label }}
+            </button>
+        </div>
+    </section>
+</div>
