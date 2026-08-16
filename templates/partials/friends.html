@@ -1,5 +1,4 @@
 <div id="friends-panel" class="tab-panel">
-
     <div class="section-header">
         <h2>Prijatelji</h2>
 
@@ -15,35 +14,46 @@
     </div>
 
     {% if friends.is_empty() %}
-
         <div class="empty-state">
             <p class="secondary-text">Nimaš še dodanih prijateljev.</p>
         </div>
-
     {% else %}
-
         {% for friend in friends %}
-
             <div class="list-row friend-row{% if loop.last %} last{% endif %}">
-
                 <div class="friend-avatar">
                     {{ friend.name.chars().next().unwrap_or('?') }}
                 </div>
 
                 <div class="row-info">
-                    <p class="row-title">
-                        {{ friend.name }}
-                    </p>
-
-                    <p class="row-meta">
-                        @{{ friend.username }}
-                    </p>
+                    <p class="row-title">{{ friend.name }}</p>
+                    <p class="row-meta">@{{ friend.username }}</p>
                 </div>
 
+                {% if friend.balance_cents < 0 %}
+                    <div class="settle-area">
+                        <button
+                            type="button"
+                            class="btn-create settle-button"
+                            hx-post="/payments/settle/{{ friend.id }}"
+                            hx-target="#friends-panel"
+                            hx-swap="outerHTML"
+                        >
+                            Poravnaj dolg
+                        </button>
+
+                        <div class="row-balance is-negative">
+                            <p class="balance-note">Dolguješ</p>
+                            <p class="amount">{{ friend.formatted_balance }}</p>
+                        </div>
+                    </div>
+
+                {% else if friend.balance_cents > 0 %}
+                    <div class="row-balance is-positive">
+                        <p class="balance-note">Prejmeš</p>
+                        <p class="amount">{{ friend.formatted_balance }}</p>
+                    </div>
+                {% endif %}
             </div>
-
         {% endfor %}
-
     {% endif %}
-
 </div>

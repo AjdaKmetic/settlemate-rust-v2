@@ -10,13 +10,11 @@ use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
     app::state::AppState,
-    entities::{
-        groups,
-        users,
-    },
+    entities::groups,
     handlers::{
         auth::get_current_user,
         expenses::ActivityItem,
+        friends::{FriendView, get_friend_views},
     },
     services::{
         balance_service::get_balance,
@@ -32,19 +30,19 @@ struct IndexTemplate {
     balance_state_class: &'static str,
     balance_label: &'static str,
     formatted_balance: String,
-    friends: Vec<users::Model>,
+    friends: Vec<FriendView>,
     groups: Vec<groups::Model>,
     active_tab: &'static str,
     activities: Vec<ActivityItem>,
 }
 
 impl IndexTemplate {
-    fn new(username: String, balance_cents: i64, friends: Vec<users::Model>) -> Self {
+    fn new(username: String, balance_cents: i64, friends: Vec<FriendView>) -> Self {
         let (balance_state_class, balance_label) =
             if balance_cents > 0 {
                 (
                     "balance-positive",
-                    "Dolgujejo ti",
+                    "Prejmeš",
                 )
             } else if balance_cents < 0 {
                 (
@@ -115,6 +113,20 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         }
     };
 
+    let friends = match get_friend_views(&state.db, user.id, friends).await {
+        Ok(friends) => friends,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu začetne strani je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
     let balance_cents = match get_balance(&state.db, user.id).await {
         Ok(balance) => balance,
 
@@ -161,7 +173,7 @@ mod tests {
         );
 
         assert_eq!(template.balance_state_class, "balance-positive");
-        assert_eq!(template.balance_label, "Dolgujejo ti");
+        assert_eq!(template.balance_label, "Prejmeš");
         assert_eq!(template.formatted_balance, "123,45 €");
     }
 

@@ -36,6 +36,7 @@ use handlers::{
         expense_form,
     },
     index::index,
+    payments::settle_debt_handler,
     tabs::{
         activity_tab,
         friends_tab,
@@ -74,6 +75,7 @@ async fn main() {
         .route("/expenses/form", get(expense_form))
         .route("/expenses/close", get(close_expense_form))
         .route("/expenses", post(create_expense_handler))
+        .route("/payments/settle/{other_user_id}", post(settle_debt_handler))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 

@@ -18,6 +18,7 @@ use crate::{
     handlers::{
         auth::get_current_user,
         expenses::{ActivityItem, build_activities},
+        friends::{FriendView, get_friend_views},
     },
     services::{
         expense_service::get_expenses_for_user,
@@ -30,7 +31,7 @@ use crate::{
 #[template(path = "partials/tab_shell.html")]
 struct TabShellTemplate {
     active_tab: &'static str,
-    friends: Vec<users::Model>,
+    friends: Vec<FriendView>,
     groups: Vec<groups::Model>,
     activities: Vec<ActivityItem>,
 }
@@ -58,12 +59,26 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
                 .into_response();
         }
     };
-
+    
     let friends = match get_friends(&state.db, user.id).await {
         Ok(friends) => friends,
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju prijateljev: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu prijateljev je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let friends = match get_friend_views(&state.db, user.id, friends).await {
+        Ok(friends) => friends,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,

@@ -16,6 +16,7 @@ use crate::{
     entities::users,
     handlers::auth::get_current_user,
     services::{
+        balance_service::get_balance_with_user,
         friend_service::{
             add_friend,
             get_friends,
@@ -28,10 +29,18 @@ use crate::{
 #[template(path = "partials/friend_form.html")]
 struct FriendFormTemplate;
 
+pub struct FriendView {
+    pub id: i32,
+    pub name: String,
+    pub username: String,
+    pub balance_cents: i64,
+    pub formatted_balance: String,
+}
+
 #[derive(Template)]
 #[template(path = "partials/friends.html")]
 struct FriendsTemplate {
-    friends: Vec<users::Model>,
+    friends: Vec<FriendView>,
 }
 
 #[derive(Deserialize)]
@@ -47,6 +56,28 @@ impl AddFriendForm {
 
         Ok(())
     }
+}
+
+pub async fn get_friend_views(db: &sea_orm::DatabaseConnection, user_id: i32, friends: Vec<users::Model>) -> Result<Vec<FriendView>, sea_orm::DbErr> {
+    let mut friend_views = Vec::new();
+
+    for friend in friends {
+        let balance_cents = get_balance_with_user(db, user_id, friend.id).await?;
+
+        let absolute = balance_cents.unsigned_abs();
+        let euros = absolute / 100;
+        let cents = absolute % 100;
+
+        friend_views.push(FriendView {
+            id: friend.id,
+            name: friend.name,
+            username: friend.username,
+            balance_cents,
+            formatted_balance: format!("{euros},{cents:02} €"),
+        });
+    }
+
+    Ok(friend_views)
 }
 
 // ====================================
@@ -138,6 +169,20 @@ pub async fn add_friend_handler(State(state): State<AppState>, jar: CookieJar, F
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju prijateljev: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu prijateljev je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let friends = match get_friend_views(&state.db, user.id, friends).await {
+        Ok(friends) => friends,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
