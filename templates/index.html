@@ -121,6 +121,20 @@
 
         {% include "partials/tab_shell.html" %}
 
+        <button
+            type="button"
+            class="tab-add"
+            hx-get="/expenses/form"
+            hx-target="#modal-root"
+            hx-swap="innerHTML"
+            aria-label="Dodaj strošek"
+            title="Dodaj strošek"
+        >
+            +
+        </button>
+
+        <div id="modal-root"></div>
+
     </main>
 
 </body>

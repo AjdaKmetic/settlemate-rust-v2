@@ -23,6 +23,11 @@ use handlers::{
         add_friend_handler,
         friend_form,
     },
+    expenses::{
+        close_expense_form,
+        create_expense_handler,
+        expense_form,
+    },
     index::index,
     tabs::{
         activity_tab,
@@ -54,6 +59,9 @@ async fn main() {
         .route("/account", get(account_page))
         .route("/account/name", post(update_name))
         .route("/account/password", post(change_password))
+        .route("/expenses/form", get(expense_form))
+        .route("/expenses/close", get(close_expense_form))
+        .route("/expenses", post(create_expense_handler))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 

@@ -12,8 +12,14 @@ use axum_extra::extract::cookie::CookieJar;
 use crate::{
     app::state::AppState,
     entities::users,
-    handlers::auth::get_current_user,
-    services::friend_service::get_friends,
+    handlers::{
+        auth::get_current_user,
+        expenses::{ActivityItem, build_activities},
+    },
+    services::{
+        expense_service::get_expenses_for_user,
+        friend_service::get_friends,
+    },
 };
 
 #[derive(Template)]
@@ -21,6 +27,7 @@ use crate::{
 struct TabShellTemplate {
     active_tab: &'static str,
     friends: Vec<users::Model>,
+    activities: Vec<ActivityItem>,
 }
 
 // ====================================
@@ -64,6 +71,7 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
     let template = TabShellTemplate {
         active_tab: "friends",
         friends,
+        activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
     };
 
     match template.render() {
@@ -104,6 +112,7 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
     let template = TabShellTemplate {
         active_tab: "groups",
         friends: Vec::new(), // Askama zahteva polje friends v vseh vejah
+        activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
     };
 
     match template.render() {
@@ -123,8 +132,8 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
 
 // zavihek z aktivnostjo
 pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Response {
-    match get_current_user(&state, &jar).await {
-        Ok(Some(_)) => {}
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
 
         Ok(None) => {
             return Redirect::to("/login").into_response();
@@ -139,11 +148,26 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
             )
                 .into_response();
         }
-    }
+    };
+
+    let expenses = match get_expenses_for_user(&state.db, user.id).await {
+        Ok(expenses) => expenses,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju aktivnosti: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu aktivnosti je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
 
     let template = TabShellTemplate {
         active_tab: "activity",
         friends: Vec::new(), // Askama zahteva polje friends v vseh vejah
+        activities: build_activities(expenses, user.id),
     };
 
     match template.render() {

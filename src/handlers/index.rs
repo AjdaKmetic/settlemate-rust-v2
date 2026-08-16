@@ -11,7 +11,10 @@ use axum_extra::extract::cookie::CookieJar;
 use crate::{
     app::state::AppState,
     entities::users,
-    handlers::auth::get_current_user,
+    handlers::{
+        auth::get_current_user,
+        expenses::ActivityItem,
+    },
     services::{
         balance_service::get_balance,
         friend_service::get_friends,
@@ -28,6 +31,7 @@ struct IndexTemplate {
     formatted_balance: String,
     friends: Vec<users::Model>,
     active_tab: &'static str,
+    activities: Vec<ActivityItem>,
 }
 
 impl IndexTemplate {
@@ -63,6 +67,7 @@ impl IndexTemplate {
             formatted_balance,
             friends,
             active_tab: "friends",
+            activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
         }
     }
 }

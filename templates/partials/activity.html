@@ -1,11 +1,39 @@
 <div class="tab-panel">
-
     <div class="section-header">
         <h2>Aktivnost</h2>
     </div>
 
-    <div class="empty-state">
-        <p class="secondary-text">Aktivnost.</p>
-    </div>
+    {% if activities.is_empty() %}
+        <p class="empty-state">
+            Ni še zabeleženih stroškov.
+        </p>
+    {% else %}
+        {% for activity in activities %}
+            <div class="list-row">
+                <div class="activity-icon">
+                    €
+                </div>
 
+                <div class="row-info">
+                    <p class="row-title">
+                        {{ activity.description }}
+                    </p>
+
+                    <p class="row-meta">
+                        {% if activity.paid_by_current_user %}
+                            Plačnik: ti
+                        {% else %}
+                            Plačnik: prijatelj
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="row-balance is-neutral">
+                    <p class="amount">
+                        {{ activity.formatted_amount }}
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 </div>
