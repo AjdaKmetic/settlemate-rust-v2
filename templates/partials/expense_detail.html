@@ -1,0 +1,115 @@
+<div id="activity-panel" class="tab-panel">
+
+    <div class="section-header">
+        <h2>{{ expense.description }}</h2>
+
+        <div class="form-actions">
+            <details class="account-menu">
+                <summary class="nav-user" title="Nastavitve stroška" aria-label="Nastavitve stroška">
+                    <span class="avatar">
+                        <svg class="icon-text" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </span>
+                </summary>
+
+                <div class="account-dropdown">
+                    <button
+                        type="button"
+                        class="account-menu-item"
+                        hx-get="/expenses/{{ expense.id }}/description/form"
+                        hx-target="#activity-panel"
+                        hx-swap="outerHTML"
+                    >
+                        Uredi opis
+                    </button>
+
+                    <button
+                        type="button"
+                        class="account-menu-item"
+                        hx-get="/expenses/{{ expense.id }}/delete/form"
+                        hx-target="#modal-root"
+                        hx-swap="innerHTML"
+                    >
+                        Izbriši strošek
+                    </button>
+                </div>
+            </details>
+
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-get="/tabs/activity"
+                hx-target="#tab-shell"
+                hx-swap="outerHTML"
+            >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Nazaj
+            </button>
+        </div>
+    </div>
+
+    <div class="list-row last">
+
+        <div class="activity-icon">
+            €
+        </div>
+
+        <div class="row-info">
+            <p class="row-title">
+                Skupaj
+            </p>
+
+            <p class="row-meta">
+                Plačnik: {{ payer_label }}
+            </p>
+        </div>
+
+        <div class="row-balance is-neutral">
+            <p class="amount">
+                {{ formatted_amount }}
+            </p>
+        </div>
+
+    </div>
+
+    <div class="section-header">
+        <h2>Razdelitev</h2>
+    </div>
+
+    {% if splits.is_empty() %}
+
+        <div class="empty-state">
+            <p class="secondary-text">Strošek še ni razdeljen.</p>
+        </div>
+
+    {% else %}
+
+        {% for split in splits %}
+
+            <div class="list-row{% if loop.last %} last{% endif %}">
+
+                <div class="friend-avatar">
+                    {{ split.name.chars().next().unwrap_or('?') }}
+                </div>
+
+                <div class="row-info">
+                    <p class="row-title">
+                        {{ split.name }}
+                    </p>
+                </div>
+
+                <div class="row-balance is-neutral">
+                    <p class="amount">
+                        {{ split.amount }}
+                    </p>
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+</div>

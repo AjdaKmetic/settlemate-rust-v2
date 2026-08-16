@@ -37,7 +37,12 @@ use handlers::{
     expenses::{
         close_expense_form,
         create_expense_handler,
+        delete_expense_handler,
+        expense_delete_form,
+        expense_description_form,
+        expense_detail,
         expense_form,
+        update_expense_description_handler,
     },
     index::index,
     tabs::{
@@ -82,6 +87,11 @@ async fn main() {
         .route("/expenses/form", get(expense_form))
         .route("/expenses/close", get(close_expense_form))
         .route("/expenses", post(create_expense_handler))
+        .route("/expenses/{id}", get(expense_detail))
+        .route("/expenses/{id}/description/form", get(expense_description_form))
+        .route("/expenses/{id}/description", post(update_expense_description_handler))
+        .route("/expenses/{id}/delete/form", get(expense_delete_form))
+        .route("/expenses/{id}/delete", post(delete_expense_handler))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 

@@ -56,13 +56,13 @@ struct GroupMemberFormTemplate {
 // splošno potrditveno okno, uporabno za vse potrditve
 #[derive(Template)]
 #[template(path = "partials/confirm_modal.html")]
-struct ConfirmModalTemplate {
-    title: String,
-    message: String,
-    cancel_label: String,
-    confirm_label: String,
-    confirm_url: String,
-    confirm_target: String,
+pub struct ConfirmModalTemplate {
+    pub title: String,
+    pub message: String,
+    pub cancel_label: String,
+    pub confirm_label: String,
+    pub confirm_url: String,
+    pub confirm_target: String,
 }
 
 #[derive(Deserialize)]

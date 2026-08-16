@@ -1,3 +1,7 @@
+/* ====================================
+   osnove in barve
+   ==================================== */
+
 * {
     margin: 0;
     padding: 0;
@@ -59,6 +63,10 @@ body {
     flex-direction: column;
 }
 
+/* ====================================
+   navigacija
+   ==================================== */
+
 .navbar {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
@@ -112,6 +120,10 @@ body {
     flex-shrink: 0;
 }
 
+/* ====================================
+   postavitev strani
+   ==================================== */
+
 .container {
     max-width: 740px;
     margin: 0 auto;
@@ -119,6 +131,10 @@ body {
     width: 100%;
     flex: 1;
 }
+
+/* ====================================
+   kartica s skupnim stanjem
+   ==================================== */
 
 .balance-card {
     --balance-bg: var(--balance-neutral-bg);
@@ -198,6 +214,10 @@ body {
     margin-top: 4px;
 }
 
+/* ====================================
+   zavihki
+   ==================================== */
+
 .tab-shell {
     width: 100%;
 }
@@ -259,6 +279,10 @@ body {
     display: none;
 }
 
+/* ====================================
+   gumb za dodajanje stroška
+   ==================================== */
+
 .tab-add {
     position: fixed;
     bottom: 28px;
@@ -285,12 +309,16 @@ body {
     transform: translateY(-2px);
 }
 
+/* ====================================
+   naslovi sekcij
+   ==================================== */
+
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    min-height: 36px; /* enaka višina naslova tudi brez gumba */
+    min-height: 36px;
     margin-bottom: 14px;
 }
 
@@ -299,6 +327,15 @@ body {
     font-weight: 700;
     color: var(--color-text);
 }
+
+.list-row + .section-header {
+    margin-top: 18px;
+    margin-bottom: 6px;
+}
+
+/* ====================================
+   gumbi in obrazci
+   ==================================== */
 
 .btn-create {
     background: var(--color-primary);
@@ -382,6 +419,10 @@ body {
     border-color: var(--color-border-strong);
 }
 
+/* ====================================
+   vrstice seznama
+   ==================================== */
+
 .list-row {
     display: flex;
     align-items: center;
@@ -399,6 +440,10 @@ body {
 .empty-state {
     padding: 15px 0 16px;
 }
+
+/* ====================================
+   ikone in avatarji v vrsticah
+   ==================================== */
 
 .group-icon,
 .friend-avatar,
@@ -463,6 +508,10 @@ body {
     color: var(--category-activity-accent);
 }
 
+/* ====================================
+   vsebina in znesek v vrstici
+   ==================================== */
+
 .row-info {
     flex: 1;
     min-width: 0;
@@ -522,6 +571,10 @@ body {
     color: var(--balance-negative-secondary);
 }
 
+/* ====================================
+   noga
+   ==================================== */
+
 .footer {
     text-align: center;
     padding: 20px;
@@ -532,6 +585,10 @@ body {
     justify-content: center;
     gap: 6px;
 }
+
+/* ====================================
+   prilagoditve za male zaslone
+   ==================================== */
 
 @media (max-width: 640px) {
     .navbar {
@@ -587,6 +644,10 @@ body {
         min-width: 72px;
     }
 }
+
+/* ====================================
+   modalna okna in potrditve
+   ==================================== */
 
 .modal-overlay {
     position: fixed;
@@ -646,6 +707,10 @@ body {
     color: var(--color-muted);
     margin-bottom: 24px;
 }
+
+/* ====================================
+   prijava, registracija in račun
+   ==================================== */
 
 .auth-page {
     width: 100%;
@@ -739,6 +804,10 @@ body {
     font-weight: 600;
 }
 
+/* ====================================
+   spustni meni (račun in nastavitve)
+   ==================================== */
+
 .account-menu {
     position: relative;
 }
@@ -805,6 +874,10 @@ body {
     border: none;
     border-top: 1px solid var(--color-border);
 }
+
+/* ====================================
+   seznam prijateljev
+   ==================================== */
 
 .friend-row {
     cursor: default;
