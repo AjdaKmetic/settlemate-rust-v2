@@ -1,0 +1,38 @@
+<div id="groups-panel" class="tab-panel">
+
+    <div class="section-header">
+        <h2>Nova skupina</h2>
+    </div>
+
+    <form
+        class="inline-form"
+        hx-post="/groups"
+        hx-target="#groups-panel"
+        hx-swap="outerHTML"
+    >
+        <input
+            type="text"
+            name="name"
+            placeholder="Ime skupine"
+            required
+        >
+
+        <button
+            type="submit"
+            class="btn-create"
+        >
+            Ustvari
+        </button>
+
+        <button
+            type="button"
+            class="btn-cancel"
+            hx-get="/tabs/groups"
+            hx-target="#tab-shell"
+            hx-swap="outerHTML"
+        >
+            Prekliči
+        </button>
+    </form>
+
+</div>

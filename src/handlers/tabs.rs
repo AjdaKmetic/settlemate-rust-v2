@@ -11,7 +11,10 @@ use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
     app::state::AppState,
-    entities::users,
+    entities::{
+        groups,
+        users,
+    },
     handlers::{
         auth::get_current_user,
         expenses::{ActivityItem, build_activities},
@@ -19,6 +22,7 @@ use crate::{
     services::{
         expense_service::get_expenses_for_user,
         friend_service::get_friends,
+        group_service::get_groups_for_user,
     },
 };
 
@@ -27,6 +31,7 @@ use crate::{
 struct TabShellTemplate {
     active_tab: &'static str,
     friends: Vec<users::Model>,
+    groups: Vec<groups::Model>,
     activities: Vec<ActivityItem>,
 }
 
@@ -71,6 +76,7 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
     let template = TabShellTemplate {
         active_tab: "friends",
         friends,
+        groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
         activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
     };
 
@@ -91,8 +97,8 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
 
 // zavihek s skupinami
 pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Response {
-    match get_current_user(&state, &jar).await {
-        Ok(Some(_)) => {}
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
 
         Ok(None) => {
             return Redirect::to("/login").into_response();
@@ -107,11 +113,26 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
             )
                 .into_response();
         }
-    }
+    };
+
+    let groups = match get_groups_for_user(&state.db, user.id).await {
+        Ok(groups) => groups,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju skupin: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
 
     let template = TabShellTemplate {
         active_tab: "groups",
         friends: Vec::new(), // Askama zahteva polje friends v vseh vejah
+        groups,
         activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
     };
 
@@ -167,6 +188,7 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
     let template = TabShellTemplate {
         active_tab: "activity",
         friends: Vec::new(), // Askama zahteva polje friends v vseh vejah
+        groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
         activities: build_activities(expenses, user.id),
     };
 

@@ -1,7 +1,7 @@
 // ustvarjanje in prikaz skupin
 
-/*
 use askama::Template;
+
 use axum::{
     extract::State,
     http::StatusCode,
@@ -13,22 +13,23 @@ use serde::Deserialize;
 
 use crate::{
     app::state::AppState,
+    entities::groups,
     handlers::auth::get_current_user,
     services::group_service::{
         add_member_to_group,
         create_group,
+        get_groups_for_user,
     },
 };
 
-// ====================================
-//            NOVA SKUPINA
-// ====================================
+#[derive(Template)]
+#[template(path = "partials/group_form.html")]
+struct GroupFormTemplate;
 
 #[derive(Template)]
-#[template(path = "new_group.html")]
-struct NewGroupTemplate {
-    has_error: bool,
-    error_message: String,
+#[template(path = "partials/groups.html")]
+struct GroupsTemplate {
+    groups: Vec<groups::Model>,
 }
 
 #[derive(Deserialize)]
@@ -47,39 +48,18 @@ impl NewGroupForm {
 }
 
 // ====================================
-//             handlerja
+//             handlerji
 // ====================================
 
-// prikaz obrazca za novo skupino
-pub async fn new_group_form(State(state): State<AppState>, jar: CookieJar) -> Response {
-    match get_current_user(&state, &jar).await {
-        Ok(Some(_)) => {}
-
-        Ok(None) => {
-            return Redirect::to("/login").into_response();
-        }
-
-        Err(error) => {
-            eprintln!("Napaka pri preverjanju prijavljenega uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
-        }
-    }
-
-    let template = NewGroupTemplate {
-        has_error: false,
-        error_message: String::new(),
-    };
+// prikaz obrazca
+pub async fn group_form() -> Response {
+    let template = GroupFormTemplate;
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
         Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za novo skupino: {error}");
+            eprintln!("Napaka pri izrisu obrazca za skupino: {error}");
 
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -90,11 +70,7 @@ pub async fn new_group_form(State(state): State<AppState>, jar: CookieJar) -> Re
     }
 }
 
-// ustvarjanje nove skupine
-pub async fn create_group_handler(State(state): State<AppState>,
-    jar: CookieJar,
-    Form(form): Form<NewGroupForm>,
-) -> Response {
+pub async fn create_group_handler(State(state): State<AppState>, jar: CookieJar, Form(form): Form<NewGroupForm>) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
 
@@ -114,20 +90,11 @@ pub async fn create_group_handler(State(state): State<AppState>,
     };
 
     if let Err(error_message) = form.validate() {
-        let template = NewGroupTemplate {
-            has_error: true,
-            error_message: error_message.to_string(),
-        };
-
-        return match template.render() {
-            Ok(html) => (StatusCode::BAD_REQUEST, Html(html)).into_response(),
-
-            Err(error) => {
-                eprintln!("Napaka pri izrisu obrazca za novo skupino: {error}");
-
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            }
-        };
+        return (
+            StatusCode::BAD_REQUEST,
+            error_message,
+        )
+            .into_response();
     }
 
     let name = form.name.trim();
@@ -146,6 +113,7 @@ pub async fn create_group_handler(State(state): State<AppState>,
         }
     };
 
+    // ustvarjalec postane član skupine
     if let Err(error) = add_member_to_group(&state.db, group.id, user.id).await {
         eprintln!("Napaka pri dodajanju uporabnika v skupino: {error}");
 
@@ -156,7 +124,35 @@ pub async fn create_group_handler(State(state): State<AppState>,
             .into_response();
     }
 
-    Redirect::to("/").into_response()
-}
+    let groups = match get_groups_for_user(&state.db, user.id).await {
+        Ok(groups) => groups,
 
-*/
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju skupin: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let template = GroupsTemplate {
+        groups,
+    };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu skupin: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response()
+        }
+    }
+}

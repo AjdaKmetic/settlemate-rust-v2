@@ -1,11 +1,45 @@
-<div class="tab-panel">
+<div id="groups-panel" class="tab-panel">
 
     <div class="section-header">
         <h2>Skupine</h2>
+
+        <button
+            type="button"
+            class="btn-create"
+            hx-get="/groups/form"
+            hx-target="#groups-panel"
+            hx-swap="outerHTML"
+        >
+            + Nova skupina
+        </button>
     </div>
 
-    <div class="empty-state">
-        <p class="secondary-text">Skupine.</p>
-    </div>
+    {% if groups.is_empty() %}
+
+        <div class="empty-state">
+            <p class="secondary-text">Nimaš še nobene skupine.</p>
+        </div>
+
+    {% else %}
+
+        {% for group in groups %}
+
+            <div class="list-row{% if loop.last %} last{% endif %}">
+
+                <div class="group-icon">
+                    {{ group.name.chars().next().unwrap_or('?') }}
+                </div>
+
+                <div class="row-info">
+                    <p class="row-title">
+                        {{ group.name }}
+                    </p>
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
 
 </div>

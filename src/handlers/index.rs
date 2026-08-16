@@ -10,7 +10,10 @@ use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
     app::state::AppState,
-    entities::users,
+    entities::{
+        groups,
+        users,
+    },
     handlers::{
         auth::get_current_user,
         expenses::ActivityItem,
@@ -30,6 +33,7 @@ struct IndexTemplate {
     balance_label: &'static str,
     formatted_balance: String,
     friends: Vec<users::Model>,
+    groups: Vec<groups::Model>,
     active_tab: &'static str,
     activities: Vec<ActivityItem>,
 }
@@ -66,6 +70,7 @@ impl IndexTemplate {
             balance_label,
             formatted_balance,
             friends,
+            groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
             active_tab: "friends",
             activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
         }
