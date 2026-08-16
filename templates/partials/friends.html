@@ -1,11 +1,11 @@
-<div id="friends-panel" class="content-card">
+<div id="friends-panel" class="tab-panel">
 
-    <div class="content-header">
+    <div class="section-header">
         <h2>Prijatelji</h2>
 
         <button
             type="button"
-            class="primary-button"
+            class="btn-create"
             hx-get="/friends/form"
             hx-target="#friends-panel"
             hx-swap="outerHTML"
@@ -16,37 +16,33 @@
 
     {% if friends.is_empty() %}
 
-        <p class="empty-message">
-            Nimaš še dodanih prijateljev.
-        </p>
+        <div class="empty-state">
+            <p class="secondary-text">Nimaš še dodanih prijateljev.</p>
+        </div>
 
     {% else %}
 
-        <div class="friends-list">
+        {% for friend in friends %}
 
-            {% for friend in friends %}
+            <div class="list-row friend-row{% if loop.last %} last{% endif %}">
 
-                <div class="friend-row">
-
-                    <div class="friend-avatar">
-                        {{ friend.name.chars().next().unwrap_or('?') }}
-                    </div>
-
-                    <div>
-                        <p class="friend-name">
-                            {{ friend.name }}
-                        </p>
-
-                        <p class="friend-username">
-                            @{{ friend.username }}
-                        </p>
-                    </div>
-
+                <div class="friend-avatar">
+                    {{ friend.name.chars().next().unwrap_or('?') }}
                 </div>
 
-            {% endfor %}
+                <div class="row-info">
+                    <p class="row-title">
+                        {{ friend.name }}
+                    </p>
 
-        </div>
+                    <p class="row-meta">
+                        @{{ friend.username }}
+                    </p>
+                </div>
+
+            </div>
+
+        {% endfor %}
 
     {% endif %}
 

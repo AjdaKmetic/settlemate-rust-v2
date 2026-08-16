@@ -27,6 +27,7 @@ struct IndexTemplate {
     balance_label: &'static str,
     formatted_balance: String,
     friends: Vec<users::Model>,
+    active_tab: &'static str,
 }
 
 impl IndexTemplate {
@@ -61,6 +62,7 @@ impl IndexTemplate {
             balance_label,
             formatted_balance,
             friends,
+            active_tab: "friends",
         }
     }
 }
