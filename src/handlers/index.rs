@@ -146,6 +146,7 @@ mod tests {
         let template = IndexTemplate::new(
             "ajda".to_string(),
             12345,
+            Vec::new(),
         );
 
         assert_eq!(template.balance_state_class, "balance-positive");
@@ -158,6 +159,7 @@ mod tests {
         let template = IndexTemplate::new(
             "ajda".to_string(),
             -123,
+            Vec::new(),
         );
         assert_eq!(template.balance_state_class, "balance-negative");
         assert_eq!(template.balance_label, "Dolguješ");
@@ -169,6 +171,7 @@ mod tests {
         let template = IndexTemplate::new(
             "ajda".to_string(),
             0,
+            Vec::new(),
         );
         assert_eq!(template.balance_state_class, "balance-neutral");
         assert_eq!(template.balance_label, "Vse štima");
