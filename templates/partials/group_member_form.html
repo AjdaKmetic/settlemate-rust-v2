@@ -1,0 +1,38 @@
+<div id="groups-panel" class="tab-panel">
+
+    <div class="section-header">
+        <h2>Dodaj člana</h2>
+    </div>
+
+    <form
+        class="inline-form"
+        hx-post="/groups/{{ group.id }}/members"
+        hx-target="#groups-panel"
+        hx-swap="outerHTML"
+    >
+        <input
+            type="text"
+            name="username"
+            placeholder="Uporabniško ime"
+            required
+        >
+
+        <button
+            type="submit"
+            class="btn-create"
+        >
+            Dodaj
+        </button>
+
+        <button
+            type="button"
+            class="btn-cancel"
+            hx-get="/groups/{{ group.id }}"
+            hx-target="#groups-panel"
+            hx-swap="outerHTML"
+        >
+            Prekliči
+        </button>
+    </form>
+
+</div>

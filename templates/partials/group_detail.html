@@ -1,0 +1,62 @@
+<div id="groups-panel" class="tab-panel">
+
+    <div class="section-header">
+        <h2>{{ group.name }}</h2>
+
+        <div class="form-actions">
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-get="/tabs/groups"
+                hx-target="#tab-shell"
+                hx-swap="outerHTML"
+            >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Nazaj
+            </button>
+
+            <button
+                type="button"
+                class="btn-create"
+                hx-get="/groups/{{ group.id }}/members/form"
+                hx-target="#groups-panel"
+                hx-swap="outerHTML"
+            >
+                + Dodaj člana
+            </button>
+        </div>
+    </div>
+
+    {% if members.is_empty() %}
+
+        <div class="empty-state">
+            <p class="secondary-text">Skupina še nima članov.</p>
+        </div>
+
+    {% else %}
+
+        {% for member in members %}
+
+            <div class="list-row{% if loop.last %} last{% endif %}">
+
+                <div class="friend-avatar">
+                    {{ member.name.chars().next().unwrap_or('?') }}
+                </div>
+
+                <div class="row-info">
+                    <p class="row-title">
+                        {{ member.name }}
+                    </p>
+
+                    <p class="row-meta">
+                        @{{ member.username }}
+                    </p>
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+</div>

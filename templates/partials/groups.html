@@ -24,7 +24,12 @@
 
         {% for group in groups %}
 
-            <div class="list-row{% if loop.last %} last{% endif %}">
+            <div
+                class="list-row{% if loop.last %} last{% endif %}"
+                hx-get="/groups/{{ group.id }}"
+                hx-target="#groups-panel"
+                hx-swap="outerHTML"
+            >
 
                 <div class="group-icon">
                     {{ group.name.chars().next().unwrap_or('?') }}
