@@ -33,6 +33,18 @@ pub async fn find_user_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<
     Users::find_by_id(id).one(db).await
 }
 
+// iskanje več uporabnikov naenkrat po seznamu id-jev
+pub async fn find_users_by_ids(db: &DatabaseConnection, ids: Vec<i32>) -> Result<Vec<users::Model>, sea_orm::DbErr> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    Users::find()
+        .filter(users::Column::Id.is_in(ids))
+        .all(db)
+        .await
+}
+
 pub async fn find_user_by_email(db: &DatabaseConnection, email: &str) -> Result<Option<users::Model>, sea_orm::DbErr> {
     Users::find()
         .filter(users::Column::Email.eq(email))

@@ -7,6 +7,7 @@ use axum::{
 };
 use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
+use std::collections::HashMap;
 
 use crate::{
     app::state::AppState,
@@ -27,7 +28,7 @@ struct ExpenseFormTemplate {
 pub struct ActivityItem {
     pub description: String,
     pub formatted_amount: String,
-    pub paid_by_current_user: bool,
+    pub payer_label: String,
 }
 
 fn format_amount(amount_cents: i64) -> String {
@@ -41,13 +42,26 @@ fn format_amount(amount_cents: i64) -> String {
 pub fn build_activities(
     expenses: Vec<expenses::Model>,
     user_id: i32,
+    payer_names: &HashMap<i32, String>,
 ) -> Vec<ActivityItem> {
     expenses
         .into_iter()
-        .map(|expense| ActivityItem { // za usak activity se ustvari activity item
-            description: expense.description,
-            formatted_amount: format_amount(expense.amount_cents),
-            paid_by_current_user: expense.paid_by == user_id,
+        .map(|expense| {
+            let payer_name = payer_names
+                .get(&expense.paid_by)
+                .cloned()
+                .unwrap_or_else(|| "Neznan uporabnik".to_string());
+
+            ActivityItem {
+                description: expense.description,
+                formatted_amount: format_amount(expense.amount_cents),
+
+                payer_label: if expense.paid_by == user_id {
+                    format!("{payer_name} (ti)")
+                } else {
+                    payer_name
+                },
+            }
         })
         .collect() // vse elemente se zdruzi
 }

@@ -290,6 +290,7 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 16px;
+    min-height: 36px; /* enaka višina naslova tudi brez gumba */
     margin-bottom: 14px;
 }
 
