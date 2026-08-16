@@ -668,14 +668,18 @@ body {
     font-weight: 600;
 }
 
-.auth-form input {
+.auth-form input,
+.auth-form select {
     padding: 10px 12px;
     border: 1px solid var(--color-border);
     border-radius: 8px;
+    background: white;
+    color: var(--color-text);
     font: inherit;
 }
 
-.auth-form input:focus {
+.auth-form input:focus,
+.auth-form select:focus {
     outline: none;
     border-color: var(--color-primary);
 }

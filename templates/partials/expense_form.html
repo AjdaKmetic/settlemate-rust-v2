@@ -1,0 +1,82 @@
+<div class="modal-overlay">
+    <section class="modal-card">
+        <p class="auth-intro">
+            Dodaj strošek
+        </p>
+
+        {% if friends.is_empty() %}
+            <p class="auth-error">
+                Pred dodajanjem stroška dodaj vsaj enega prijatelja.
+            </p>
+
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-get="/expenses/close"
+                hx-target="#modal-root"
+                hx-swap="innerHTML"
+            >
+                Zapri
+            </button>
+        {% else %}
+            <form
+                class="auth-form"
+                method="post"
+                action="/expenses"
+            >
+                <label>
+                    Opis
+
+                    <input
+                        type="text"
+                        name="description"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Znesek (€)
+
+                    <input
+                        type="number"
+                        name="amount"
+                        min="0.01"
+                        step="0.01"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Razdeli s prijateljem
+
+                    <select name="friend_id" required>
+                        {% for friend in friends %}
+                            <option value="{{ friend.id }}">
+                                {{ friend.name }} (@{{ friend.username }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <div class="form-actions">
+                    <button
+                        type="button"
+                        class="btn-cancel"
+                        hx-get="/expenses/close"
+                        hx-target="#modal-root"
+                        hx-swap="innerHTML"
+                    >
+                        Prekliči
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn-create"
+                    >
+                        Shrani strošek
+                    </button>
+                </div>
+            </form>
+        {% endif %}
+    </section>
+</div>
