@@ -21,6 +21,7 @@ use handlers::{
     friends::{
         add_friend_handler,
         friend_form,
+        friends_tab,
     },
     index::index,
 };
@@ -40,6 +41,7 @@ async fn main() {
         .route("/register", get(register_form).post(register_user))
         .route("/login", get(login_form).post(login_user))
         .route("/logout", post(logout_user))
+        .route("/tabs/friends", get(friends_tab))
         .route("/friends/form", get(friend_form))
         .route("/friends", post(add_friend_handler))
         .nest_service("/static", ServeDir::new("static"))

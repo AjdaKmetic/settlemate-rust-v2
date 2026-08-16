@@ -8,6 +8,8 @@
 
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/htmx.org@2.0.8"></script>
 </head>
 
 <body>
@@ -84,80 +86,11 @@
             </div>
         </div>
 
-        <!-- zavihki -->
+        <!-- zavihki in njihova vsebina -->
 
-        <div class="tabs">
-            <button class="tab active">
-                Prijatelji
-            </button>
+        {% include "partials/tab_shell.html" %}
 
-            <button class="tab">
-                Skupine
-            </button>
-
-            <button class="tab">
-                Aktivnost
-            </button>
-        </div>
-
-        <!-- prijatelji -->
-
-        <div class="content-card">
-
-            <div class="content-header">
-                <h2>Prijatelji</h2>
-
-                <button
-                    class="primary-button"
-                    hx-get="/friends/form"
-                    hx-target="#friend-form-container"
-                    hx-swap="innerHTML"
-                >
-                    + Dodaj prijatelja
-                </button>
-            </div>
-
-            <div id="friend-form-container"></div>
-
-            <!-- seznam prijateljev -->
-
-            {% if friends.is_empty() %}
-
-                <p class="empty-message">
-                    Nimaš še dodanih prijateljev.
-                </p>
-
-            {% else %}
-
-                <div class="friends-list">
-
-                    {% for friend in friends %}
-
-                        <div class="friend-row">
-
-                            <div class="friend-avatar">
-                                {{ friend.name.chars().next().unwrap_or('?') }}
-                            </div>
-
-                            <div>
-                                <p class="friend-name">
-                                    {{ friend.name }}
-                                </p>
-
-                                <p class="friend-username">
-                                    @{{ friend.username }}
-                                </p>
-                            </div>
-
-                        </div>
-
-                    {% endfor %}
-
-                </div>
-
-            {% endif %}
-
-        </div>
+    </main>
 
 </body>
 </html>

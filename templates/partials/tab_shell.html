@@ -1,0 +1,34 @@
+<div id="tab-shell">
+
+    <div class="tabs">
+
+        <button
+            class="tab active"
+            hx-get="/tabs/friends"
+            hx-target="#tab-content"
+            hx-swap="innerHTML"
+        >
+            Prijatelji
+        </button>
+
+        <button
+            class="tab"
+        >
+            Skupine
+        </button>
+
+        <button
+            class="tab"
+        >
+            Aktivnost
+        </button>
+
+    </div>
+
+    <div id="tab-content">
+
+        {% include "partials/friends.html" %}
+
+    </div>
+
+</div>

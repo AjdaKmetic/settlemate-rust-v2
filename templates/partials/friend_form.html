@@ -1,31 +1,38 @@
-<form
-    id="friends-panel"
-    class="friend-form"
-    hx-post="/friends"
-    hx-target="#friends-panel"
-    hx-swap="outerHTML"
->
-    <input
-        type="text"
-        name="username"
-        placeholder="Uporabniško ime"
-        required
-    >
+<div id="friends-panel" class="content-card">
 
-    <button
-        class="primary-button"
-        type="submit"
-    >
-        Dodaj
-    </button>
+    <div class="content-header">
+        <h2>Dodaj prijatelja</h2>
+    </div>
 
-    <button
-        class="secondary-button"
-        type="button"
-        hx-get="/tabs/friends"
-        hx-target="#tab-shell"
+    <form
+        class="friend-form"
+        hx-post="/friends"
+        hx-target="#friends-panel"
         hx-swap="outerHTML"
     >
-        Prekliči
-    </button>
-</form>
+        <input
+            type="text"
+            name="username"
+            placeholder="Uporabniško ime"
+            required
+        >
+
+        <button
+            type="submit"
+            class="primary-button"
+        >
+            Dodaj
+        </button>
+
+        <button
+            type="button"
+            class="secondary-button"
+            hx-get="/tabs/friends"
+            hx-target="#friends-panel"
+            hx-swap="outerHTML"
+        >
+            Prekliči
+        </button>
+    </form>
+
+</div>
