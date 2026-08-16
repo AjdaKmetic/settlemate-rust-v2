@@ -24,8 +24,11 @@ use handlers::{
         friend_form,
     },
     groups::{
+        add_group_member_handler,
         create_group_handler,
+        group_detail,
         group_form,
+        group_member_form,
     },
     expenses::{
         close_expense_form,
@@ -62,6 +65,9 @@ async fn main() {
         .route("/friends", post(add_friend_handler))
         .route("/groups/form", get(group_form))
         .route("/groups", post(create_group_handler))
+        .route("/groups/{id}", get(group_detail))
+        .route("/groups/{id}/members/form", get(group_member_form))
+        .route("/groups/{id}/members", post(add_group_member_handler))
         .route("/account", get(account_page))
         .route("/account/name", post(update_name))
         .route("/account/password", post(change_password))

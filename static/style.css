@@ -267,16 +267,16 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     border: none;
     background: var(--color-primary);
     color: var(--color-text-inverse);
-    font-size: 30px;
+    font-size: 26px;
     line-height: 1;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(199, 89, 74, 0.4);
+    box-shadow: 0 4px 12px var(--color-shadow);
     transition: background 0.15s, transform 0.15s;
 }
 
@@ -363,6 +363,9 @@ body {
 }
 
 .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 8px 16px;
     border-radius: 50px;
     border: 1.5px solid var(--color-border);
