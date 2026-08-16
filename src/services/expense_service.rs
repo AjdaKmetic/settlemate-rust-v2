@@ -1,6 +1,11 @@
 use sea_orm::{
     ActiveModelTrait,
+    ColumnTrait,
     DatabaseConnection,
+    EntityTrait,
+    QueryFilter,
+    QueryOrder,
+    QuerySelect,
     Set,
     TransactionTrait,
 };
@@ -63,4 +68,16 @@ pub async fn create_equal_expense(
     transaction.commit().await?; // zaključimo transakcijo
 
     Ok(expense)
+}
+
+pub async fn get_expenses_for_user(
+    db: &DatabaseConnection,
+    user_id: i32,
+) -> Result<Vec<expenses::Model>, sea_orm::DbErr> {
+    expenses::Entity::find()
+        .inner_join(expense_splits::Entity) // povežemo tabeli expenses in expenses_splits
+        .filter(expense_splits::Column::UserId.eq(user_id)) // omejimo rezultate na prijavnega uporabnika
+        .order_by_desc(expenses::Column::CreatedAt) // uredimo po času nastanka
+        .all(db)
+        .await
 }

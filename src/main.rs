@@ -28,7 +28,8 @@ use handlers::{
     expenses::{
         expense_form,
         close_expense_form,
-        create_expense_handler
+        create_expense_handler,
+        activity_tab
     }
 };
 
@@ -56,6 +57,7 @@ async fn main() {
         .route("/expenses/form", get(expense_form))
         .route("/expenses/close", get(close_expense_form))
         .route("/expenses", post(create_expense_handler))
+        .route("/tabs/activity", get(activity_tab))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 
