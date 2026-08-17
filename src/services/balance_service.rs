@@ -112,6 +112,67 @@ pub async fn get_balance_with_user(
     ))
 }
 
+// izračun stanja med dvema uporabnikoma znotraj skupine
+pub async fn get_balance_with_user_in_group(
+    db: &DatabaseConnection,
+    user_id: i32,
+    other_user_id: i32,
+    group_id: i32,
+) -> Result<i64, sea_orm::DbErr> {
+    // koliko je drugi uporabnik dolžan prvemu
+    let owed_to_user: i64 = expense_splits::Entity::find()
+        .inner_join(expenses::Entity)
+        .filter(expense_splits::Column::UserId.eq(other_user_id))
+        .filter(expenses::Column::PaidBy.eq(user_id))
+        .filter(expenses::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|split| split.amount_cents)
+        .sum();
+
+    // koliko je prvi uporabnik dolžan drugemu
+    let owed_to_other_user: i64 = expense_splits::Entity::find()
+        .inner_join(expenses::Entity)
+        .filter(expense_splits::Column::UserId.eq(user_id))
+        .filter(expenses::Column::PaidBy.eq(other_user_id))
+        .filter(expenses::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|split| split.amount_cents)
+        .sum();
+
+    // plačila prvega uporabnika drugemu znotraj skupine
+    let sent_cents: i64 = payments::Entity::find()
+        .filter(payments::Column::FromUser.eq(user_id))
+        .filter(payments::Column::ToUser.eq(other_user_id))
+        .filter(payments::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|payment| payment.amount_cents)
+        .sum();
+
+    // plačila drugega uporabnika prvemu znotraj skupine
+    let received_cents: i64 = payments::Entity::find()
+        .filter(payments::Column::FromUser.eq(other_user_id))
+        .filter(payments::Column::ToUser.eq(user_id))
+        .filter(payments::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|payment| payment.amount_cents)
+        .sum();
+
+    Ok(calculate_balance(
+        owed_to_user,
+        owed_to_other_user,
+        sent_cents,
+        received_cents,
+    ))
+}
+
 // izračun stanja uporabnika znotraj posamezne skupine
 pub async fn get_balance_in_group(
     db: &DatabaseConnection,

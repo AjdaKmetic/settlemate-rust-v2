@@ -39,6 +39,12 @@
                     <p class="row-title">
                         {{ group.name }}
                     </p>
+
+                    {% if !group.members_summary.is_empty() %}
+                        <p class="row-meta">
+                            {{ group.members_summary }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 {% if group.balance_cents < 0 %}

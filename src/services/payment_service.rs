@@ -1,13 +1,25 @@
 use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
 
-use crate::{entities::payments, services::balance_service::get_balance_with_user};
+use crate::{
+    entities::payments,
+    services::balance_service::{
+        get_balance_with_user,
+        get_balance_with_user_in_group,
+    },
+};
 
 pub async fn settle_debt(
     db: &DatabaseConnection,
     user_id: i32,
     other_user_id: i32,
+    group_id: Option<i32>,
 ) -> Result<payments::Model, sea_orm::DbErr> {
-    let balance = get_balance_with_user(db, user_id, other_user_id).await?;
+    let balance = match group_id {
+        Some(group_id) => {
+            get_balance_with_user_in_group(db, user_id, other_user_id, group_id).await?
+        }
+        None => get_balance_with_user(db, user_id, other_user_id).await?,
+    };
 
     // "varovalka" za backend
     if balance >= 0 {
@@ -18,7 +30,7 @@ pub async fn settle_debt(
         from_user: Set(user_id),
         to_user: Set(other_user_id),
         amount_cents: Set(-balance),
-        group_id: Set(None),
+        group_id: Set(group_id),
         ..Default::default()
     };
 

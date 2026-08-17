@@ -1,7 +1,10 @@
 <div id="groups-panel" class="tab-panel">
 
     <div class="section-header">
-        <h2>{{ group.name }}</h2>
+
+        <div>
+            <h2>{{ group.name }}</h2>
+        </div>
 
         <div class="form-actions">
             <details class="account-menu">
@@ -85,6 +88,31 @@
                         @{{ member.username }}
                     </p>
                 </div>
+
+                {% if member.balance_cents > 0 %}
+                    <div class="friend-balance balance-positive">
+                        <span>Prejmeš</span>
+                        <strong>{{ member.formatted_balance }}</strong>
+                    </div>
+
+                {% else if member.balance_cents < 0 %}
+                    <div class="friend-balance balance-negative">
+                        <span>Dolguješ</span>
+                        <strong>{{ member.formatted_balance }}</strong>
+
+                        {% if !member.is_current_user %}
+                            <button
+                                type="button"
+                                class="btn-settle"
+                                hx-post="/groups/{{ group.id }}/members/{{ member.id }}/settle"
+                                hx-target="#groups-panel"
+                                hx-swap="outerHTML"
+                            >
+                                Poravnaj dolg
+                            </button>
+                        {% endif %}
+                    </div>
+                {% endif %}
 
             </div>
 

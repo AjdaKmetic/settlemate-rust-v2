@@ -17,11 +17,12 @@ use crate::{
     entities::{groups, users},
     handlers::{auth::get_current_user, confirm::ConfirmModalTemplate},
     services::{
-        balance_service::get_balance_in_group,
+        balance_service::{get_balance_in_group, get_balance_with_user_in_group},
         group_service::{
             add_member_to_group, create_group, delete_group, find_group_by_id, get_group_members,
             get_groups_for_user, remove_member_from_group,
         },
+        payment_service::settle_debt,
         user_service::find_user_by_username,
     },
 };
@@ -35,6 +36,7 @@ pub struct GroupView {
     pub name: String,
     pub balance_cents: i64,
     pub formatted_balance: String,
+    pub members_summary: String,
 }
 
 #[derive(Template)]
@@ -43,11 +45,20 @@ struct GroupsTemplate {
     groups: Vec<GroupView>,
 }
 
+pub struct GroupMemberView {
+    pub id: i32,
+    pub name: String,
+    pub username: String,
+    pub balance_cents: i64,
+    pub formatted_balance: String,
+    pub is_current_user: bool,
+}
+
 #[derive(Template)]
 #[template(path = "partials/group_detail.html")]
 struct GroupDetailTemplate {
     group: groups::Model,
-    members: Vec<users::Model>,
+    members: Vec<GroupMemberView>,
 }
 
 #[derive(Template)]
@@ -100,15 +111,75 @@ pub async fn get_group_views(
         let euros = absolute / 100;
         let cents = absolute % 100;
 
+        let mut members = get_group_members(db, group.id).await?;
+
+        // trenutno prijavljen uporabnik je zadnji
+        members.sort_by_key(|member| member.id == user_id);
+
+        let members_summary = format_members_summary(&members);
+
         group_views.push(GroupView {
             id: group.id,
             name: group.name,
             balance_cents,
             formatted_balance: format!("{euros},{cents:02} €"),
+            members_summary,
         });
     }
 
     Ok(group_views)
+}
+
+pub async fn get_group_member_views(
+    db: &DatabaseConnection,
+    user_id: i32,
+    group_id: i32,
+    members: Vec<users::Model>,
+) -> Result<Vec<GroupMemberView>, sea_orm::DbErr> {
+    let mut member_views = Vec::new();
+
+    for member in members {
+        let balance_cents =
+            get_balance_with_user_in_group(db, user_id, member.id, group_id).await?;
+
+        let absolute = balance_cents.unsigned_abs();
+        let euros = absolute / 100;
+        let cents = absolute % 100;
+
+        member_views.push(GroupMemberView {
+            id: member.id,
+            name: member.name,
+            username: member.username,
+            balance_cents,
+            formatted_balance: format!("{euros},{cents:02} €"),
+            is_current_user: member.id == user_id,
+        });
+    }
+
+    member_views.sort_by_key(|member| member.id != user_id);
+
+    Ok(member_views)
+}
+
+fn format_members_summary(members: &[users::Model]) -> String {
+    let names: Vec<&str> = members
+        .iter()
+        .map(|member| member.name.as_str())
+        .collect();
+
+    match names.len() {
+        0 => String::new(),
+        1 => names[0].to_string(),
+        2 => format!("{} in {}", names[0], names[1]),
+        3 => format!("{}, {} in {}", names[0], names[1], names[2]),
+        _ => format!(
+            "{}, {}, {} in še {}",
+            names[0],
+            names[1],
+            names[2],
+            names.len() - 3
+        ),
+    }
 }
 
 // preveri, ali je uporabnik član skupine
@@ -250,8 +321,8 @@ pub async fn group_detail(
     jar: CookieJar,
     Path(group_id): Path<i32>,
 ) -> Response {
-    match get_current_user(&state, &jar).await {
-        Ok(Some(_)) => {}
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
 
         Ok(None) => {
             return Redirect::to("/login").into_response();
@@ -266,7 +337,7 @@ pub async fn group_detail(
             )
                 .into_response();
         }
-    }
+    };
 
     let group = match find_group_by_id(&state.db, group_id).await {
         Ok(Some(group)) => group,
@@ -291,6 +362,20 @@ pub async fn group_detail(
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju članov skupine: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupine je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let members = match get_group_member_views(&state.db, user.id, group_id, members).await {
+        Ok(members) => members,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o članih skupine: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -382,8 +467,8 @@ pub async fn add_group_member_handler(
     Path(group_id): Path<i32>,
     Form(form): Form<AddMemberForm>,
 ) -> Response {
-    match get_current_user(&state, &jar).await {
-        Ok(Some(_)) => {}
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
 
         Ok(None) => {
             return Redirect::to("/login").into_response();
@@ -398,7 +483,7 @@ pub async fn add_group_member_handler(
             )
                 .into_response();
         }
-    }
+    };
 
     if let Err(error_message) = form.validate() {
         return (StatusCode::BAD_REQUEST, error_message).into_response();
@@ -461,6 +546,20 @@ pub async fn add_group_member_handler(
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju članov skupine: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupine je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let members = match get_group_member_views(&state.db, user.id, group_id, members).await {
+        Ok(members) => members,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o članih skupine: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -858,6 +957,108 @@ pub async fn delete_group_handler(
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response()
+        }
+    }
+}
+
+// poravnava dolga s članom znotraj skupine
+pub async fn settle_group_debt_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path((group_id, member_id)): Path<(i32, i32)>,
+) -> Response {
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
+
+        Ok(None) => {
+            return Redirect::to("/login").into_response();
+        }
+
+        Err(error) => {
+            eprintln!("Napaka pri preverjanju prijavljenega uporabnika: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri poravnavi dolga je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    if let Err(error) =
+        settle_debt(&state.db, user.id, member_id, Some(group_id)).await
+    {
+        eprintln!("Napaka pri poravnavi dolga: {error}");
+
+        return (
+            StatusCode::BAD_REQUEST,
+            "Dolga ni bilo mogoče poravnati.",
+        )
+            .into_response();
+    }
+
+    // ponovno pridobimo skupino
+    let group = match find_group_by_id(&state.db, group_id).await {
+        Ok(Some(group)) => group,
+
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, "Skupina ne obstaja.").into_response();
+        }
+
+        Err(error) => {
+            eprintln!("Napaka pri iskanju skupine: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupine je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    // ponovno pridobimo člane, da se stanje takoj osveži
+    let members = match get_group_members(&state.db, group_id).await {
+        Ok(members) => members,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju članov skupine: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupine je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let members =
+        match get_group_member_views(&state.db, user.id, group_id, members).await {
+            Ok(members) => members,
+
+            Err(error) => {
+                eprintln!("Napaka pri pripravi podatkov o članih skupine: {error}");
+
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Pri prikazu skupine je prišlo do napake.",
+                )
+                    .into_response();
+            }
+        };
+
+    let template = GroupDetailTemplate { group, members };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu skupine: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupine je prišlo do napake.",
             )
                 .into_response()
         }

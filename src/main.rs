@@ -20,8 +20,16 @@ use handlers::{
     },
     friends::{add_friend_handler, friend_delete_form, friend_form, remove_friend_handler},
     groups::{
-        add_group_member_handler, create_group_handler, delete_group_handler, group_delete_form,
-        group_detail, group_form, group_leave_form, group_member_form, leave_group_handler,
+        add_group_member_handler, 
+        create_group_handler, 
+        delete_group_handler, 
+        group_delete_form,
+        group_detail, 
+        group_form, 
+        group_leave_form, 
+        group_member_form, 
+        leave_group_handler,
+        settle_group_debt_handler,
     },
     index::index,
     payments::settle_debt_handler,
@@ -59,6 +67,7 @@ async fn main() {
         .route("/groups/{id}/leave", post(leave_group_handler))
         .route("/groups/{id}/delete/form", get(group_delete_form))
         .route("/groups/{id}/delete", post(delete_group_handler))
+        .route("/groups/{group_id}/members/{member_id}/settle", post(settle_group_debt_handler))
         .route("/account", get(account_page))
         .route("/account/name", post(update_name))
         .route("/account/password", post(change_password))

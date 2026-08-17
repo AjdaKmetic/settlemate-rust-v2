@@ -49,7 +49,7 @@ pub async fn settle_debt_handler(
         }
     };
 
-    if let Err(error) = settle_debt(&state.db, user.id, other_user_id).await {
+    if let Err(error) = settle_debt(&state.db, user.id, other_user_id, None).await {
         eprintln!("Napaka pri poravnavi dolga: {error}");
 
         return (StatusCode::BAD_REQUEST, "Dolga ni bilo mogoče poravnati.").into_response();
