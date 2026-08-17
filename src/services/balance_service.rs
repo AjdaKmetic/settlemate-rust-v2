@@ -112,6 +112,61 @@ pub async fn get_balance_with_user(
     ))
 }
 
+// izračun stanja uporabnika znotraj posamezne skupine
+pub async fn get_balance_in_group(
+    db: &DatabaseConnection,
+    user_id: i32,
+    group_id: i32,
+) -> Result<i64, sea_orm::DbErr> {
+    // stroški v skupini, ki jih je plačal uporabnik
+    let paid_cents: i64 = expenses::Entity::find()
+        .filter(expenses::Column::PaidBy.eq(user_id))
+        .filter(expenses::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|expense| expense.amount_cents)
+        .sum();
+
+    // deleži uporabnika pri stroških te skupine
+    let owed_cents: i64 = expense_splits::Entity::find()
+        .inner_join(expenses::Entity)
+        .filter(expense_splits::Column::UserId.eq(user_id))
+        .filter(expenses::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|split| split.amount_cents)
+        .sum();
+
+    // plačila, ki jih je uporabnik poslal znotraj skupine
+    let sent_cents: i64 = payments::Entity::find()
+        .filter(payments::Column::FromUser.eq(user_id))
+        .filter(payments::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|payment| payment.amount_cents)
+        .sum();
+
+    // plačila, ki jih je uporabnik prejel znotraj skupine
+    let received_cents: i64 = payments::Entity::find()
+        .filter(payments::Column::ToUser.eq(user_id))
+        .filter(payments::Column::GroupId.eq(group_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|payment| payment.amount_cents)
+        .sum();
+
+    Ok(calculate_balance(
+        paid_cents,
+        owed_cents,
+        sent_cents,
+        received_cents,
+    ))
+}
+
 // ====================================
 //               TESTI
 // ====================================

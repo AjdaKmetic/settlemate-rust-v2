@@ -41,6 +41,19 @@
                     </p>
                 </div>
 
+                {% if group.balance_cents < 0 %}
+                    <div class="row-balance is-negative">
+                        <p class="balance-note">Dolguješ</p>
+                        <p class="amount">{{ group.formatted_balance }}</p>
+                    </div>
+
+                {% else if group.balance_cents > 0 %}
+                    <div class="row-balance is-positive">
+                        <p class="balance-note">Prejmeš</p>
+                        <p class="amount">{{ group.formatted_balance }}</p>
+                    </div>
+                {% endif %}
+
             </div>
 
         {% endfor %}

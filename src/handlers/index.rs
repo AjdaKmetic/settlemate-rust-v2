@@ -10,11 +10,11 @@ use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
     app::state::AppState,
-    entities::groups,
     handlers::{
         auth::get_current_user,
         expenses::ActivityItem,
         friends::{FriendView, get_friend_views},
+        groups::GroupView,
     },
     services::{balance_service::get_balance, friend_service::get_friends},
 };
@@ -29,7 +29,7 @@ struct IndexTemplate {
     formatted_balance: String,
     oob: bool,
     friends: Vec<FriendView>,
-    groups: Vec<groups::Model>,
+    groups: Vec<GroupView>,
     active_tab: &'static str,
     activities: Vec<ActivityItem>,
 }

@@ -17,6 +17,7 @@ use crate::{
     entities::{groups, users},
     handlers::{auth::get_current_user, confirm::ConfirmModalTemplate},
     services::{
+        balance_service::get_balance_in_group,
         group_service::{
             add_member_to_group, create_group, delete_group, find_group_by_id, get_group_members,
             get_groups_for_user, remove_member_from_group,
@@ -29,10 +30,17 @@ use crate::{
 #[template(path = "partials/group_form.html")]
 struct GroupFormTemplate;
 
+pub struct GroupView {
+    pub id: i32,
+    pub name: String,
+    pub balance_cents: i64,
+    pub formatted_balance: String,
+}
+
 #[derive(Template)]
 #[template(path = "partials/groups.html")]
 struct GroupsTemplate {
-    groups: Vec<groups::Model>,
+    groups: Vec<GroupView>,
 }
 
 #[derive(Template)]
@@ -76,6 +84,31 @@ impl AddMemberForm {
 
         Ok(())
     }
+}
+
+pub async fn get_group_views(
+    db: &DatabaseConnection,
+    user_id: i32,
+    groups: Vec<groups::Model>,
+) -> Result<Vec<GroupView>, sea_orm::DbErr> {
+    let mut group_views = Vec::new();
+
+    for group in groups {
+        let balance_cents = get_balance_in_group(db, user_id, group.id).await?;
+
+        let absolute = balance_cents.unsigned_abs();
+        let euros = absolute / 100;
+        let cents = absolute % 100;
+
+        group_views.push(GroupView {
+            id: group.id,
+            name: group.name,
+            balance_cents,
+            formatted_balance: format!("{euros},{cents:02} €"),
+        });
+    }
+
+    Ok(group_views)
 }
 
 // preveri, ali je uporabnik član skupine
@@ -171,6 +204,20 @@ pub async fn create_group_handler(
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju skupin: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let groups = match get_group_views(&state.db, user.id, groups).await {
+        Ok(groups) => groups,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -689,6 +736,20 @@ pub async fn leave_group_handler(
         }
     };
 
+    let groups = match get_group_views(&state.db, user.id, groups).await {
+        Ok(groups) => groups,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
     let template = GroupsTemplate { groups };
 
     match template.render() {
@@ -763,6 +824,20 @@ pub async fn delete_group_handler(
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju skupin: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let groups = match get_group_views(&state.db, user.id, groups).await {
+        Ok(groups) => groups,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,

@@ -12,11 +12,12 @@ use std::collections::HashMap;
 
 use crate::{
     app::state::AppState,
-    entities::{groups, users},
+    entities::users,
     handlers::{
         auth::get_current_user,
         expenses::{ActivityItem, build_activities},
         friends::{FriendView, get_friend_views},
+        groups::{GroupView, get_group_views},
     },
     services::{
         expense_service::get_expenses_for_user, friend_service::get_friends,
@@ -29,7 +30,7 @@ use crate::{
 struct TabShellTemplate {
     active_tab: &'static str,
     friends: Vec<FriendView>,
-    groups: Vec<groups::Model>,
+    groups: Vec<GroupView>,
     activities: Vec<ActivityItem>,
 }
 
@@ -132,6 +133,20 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju skupin: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let groups = match get_group_views(&state.db, user.id, groups).await {
+        Ok(groups) => groups,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
 
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
