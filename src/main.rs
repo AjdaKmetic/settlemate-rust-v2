@@ -15,7 +15,8 @@ use handlers::{
     auth::{login_form, login_user, logout_user, register_form, register_user},
     expenses::{
         close_expense_form, create_expense_handler, delete_expense_handler, expense_delete_form,
-        expense_description_form, expense_detail, expense_form, update_expense_description_handler,
+        expense_description_form, expense_detail, expense_form, expense_group_form,
+        update_expense_description_handler,
     },
     friends::{add_friend_handler, friend_delete_form, friend_form, remove_friend_handler},
     groups::{
@@ -79,6 +80,7 @@ async fn main() {
         )
         .route("/expenses/{id}/delete/form", get(expense_delete_form))
         .route("/expenses/{id}/delete", post(delete_expense_handler))
+        .route("/expenses/form/group", get(expense_group_form))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 

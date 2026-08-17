@@ -1,0 +1,19 @@
+<div id="expense-participants" class="friend-selection">
+    <p>
+        <strong>Razdeli med</strong>
+    </p>
+
+    {% for participant in participants %}
+        <label class="checkbox-row">
+            <input
+                type="checkbox"
+                name="participant_ids"
+                value="{{ participant.id }}"
+            >
+
+            <span>
+                {{ participant.name }} (@{{ participant.username }})
+            </span>
+        </label>
+    {% endfor %}
+</div>

@@ -5,14 +5,14 @@ use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
 };
-use axum_extra::extract::cookie::CookieJar;
+use axum_extra::extract::{Form as MultiValueForm, cookie::CookieJar};
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 use std::collections::HashMap;
 
 use crate::{
     app::state::AppState,
-    entities::{expenses, users},
+    entities::{expenses, groups, users},
     handlers::{auth::get_current_user, confirm::ConfirmModalTemplate, index::balance_view},
     services::{
         balance_service::get_balance,
@@ -21,6 +21,7 @@ use crate::{
             get_expenses_for_user, update_expense_description,
         },
         friend_service::get_friends,
+        group_service::{get_group_members, get_groups_for_user},
         user_service::find_users_by_ids,
     },
 };
@@ -28,7 +29,13 @@ use crate::{
 #[derive(Template)]
 #[template(path = "partials/expense_form.html")]
 struct ExpenseFormTemplate {
-    friends: Vec<users::Model>,
+    participants: Vec<users::Model>,
+}
+
+#[derive(Template)]
+#[template(path = "partials/expense_group_form.html")]
+struct ExpenseGroupFormTemplate {
+    groups: Vec<groups::Model>,
 }
 
 // posamezen delež za prikaz razdelitve
@@ -82,6 +89,20 @@ fn format_amount(amount_cents: i64) -> String {
     format!("{euros},{cents:02} €")
 }
 
+fn parse_amount_to_cents(amount: &str) -> Result<i64, &'static str> {
+    let normalized = amount.trim().replace(',', ".");
+
+    let amount_euros = normalized
+        .parse::<f64>()
+        .map_err(|_| "Vnesi veljaven znesek, na primer 12,50.")?;
+
+    if !amount_euros.is_finite() || amount_euros <= 0.0 {
+        return Err("Znesek mora biti večji od nič.");
+    }
+
+    Ok((amount_euros * 100.0).round() as i64)
+}
+
 // pretvorba stroškov v elemente za prikaz aktivnosti
 pub fn build_activities(
     expenses: Vec<expenses::Model>,
@@ -115,8 +136,12 @@ pub fn build_activities(
 #[derive(Deserialize)]
 pub struct CreateExpenseForm {
     description: String,
-    amount: f64,
-    friend_id: i32,
+    amount: String,
+
+    #[serde(default)]
+    participant_ids: Vec<i32>,
+
+    group_id: Option<i32>,
 }
 
 #[derive(Deserialize)]
@@ -261,9 +286,9 @@ pub async fn expense_form(State(state): State<AppState>, jar: CookieJar) -> Resp
         }
     };
 
-    let friends = match get_friends(&state.db, user.id).await {
+    let participants = match get_friends(&state.db, user.id).await {
         // pridobimo prijatelje
-        Ok(friends) => friends,
+        Ok(participants) => participants,
 
         Err(error) => {
             eprintln!("Napaka pri pridobivanju prijateljev: {error}");
@@ -276,7 +301,7 @@ pub async fn expense_form(State(state): State<AppState>, jar: CookieJar) -> Resp
         }
     };
 
-    let template = ExpenseFormTemplate { friends };
+    let template = ExpenseFormTemplate { participants };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -300,7 +325,7 @@ pub async fn close_expense_form() -> Html<&'static str> {
 pub async fn create_expense_handler(
     State(state): State<AppState>,
     jar: CookieJar,
-    Form(form): Form<CreateExpenseForm>,
+    MultiValueForm(form): MultiValueForm<CreateExpenseForm>,
 ) -> Response {
     let user = match get_current_user(&state, &jar).await {
         // preveri prijavljenega uporabnika
@@ -321,14 +346,51 @@ pub async fn create_expense_handler(
         }
     };
 
-    let amount_cents = (form.amount * 100.0).round() as i64;
+    let amount_cents = match parse_amount_to_cents(&form.amount) {
+        Ok(amount_cents) => amount_cents,
+
+        Err(error_message) => {
+            return (StatusCode::BAD_REQUEST, error_message).into_response();
+        }
+    };
+
+    let participant_ids: Vec<i32> = match form.group_id {
+        Some(group_id) => {
+            let members = match get_group_members(&state.db, group_id).await {
+                Ok(members) => members,
+
+                Err(error) => {
+                    eprintln!("Napaka pri pridobivanju članov skupine: {error}");
+
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Pri pridobivanju članov skupine je prišlo do napake.",
+                    )
+                        .into_response();
+                }
+            };
+
+            if !members.iter().any(|member| member.id == user.id) {
+                return (StatusCode::FORBIDDEN, "Nisi član izbrane skupine.").into_response();
+            }
+
+            members
+                .into_iter()
+                .filter(|member| member.id != user.id)
+                .map(|member| member.id)
+                .collect()
+        }
+
+        None => form.participant_ids.clone(),
+    };
 
     match create_equal_expense(
         &state.db,
         &form.description,
         amount_cents,
         user.id,
-        form.friend_id,
+        &participant_ids,
+        form.group_id,
     )
     .await
     {
@@ -687,6 +749,56 @@ pub async fn delete_expense_handler(
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Pri prikazu stanja uporabnika je prišlo do napake.",
+            )
+                .into_response()
+        }
+    }
+}
+
+pub async fn expense_group_form(State(state): State<AppState>, jar: CookieJar) -> Response {
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
+
+        Ok(None) => {
+            return Redirect::to("/login").into_response();
+        }
+
+        Err(error) => {
+            eprintln!("Napaka pri preverjanju uporabnika: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu obrazca za strošek je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let groups = match get_groups_for_user(&state.db, user.id).await {
+        Ok(groups) => groups,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju skupin: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri pridobivanju skupin je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let template = ExpenseGroupFormTemplate { groups };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu obrazca za skupinski strošek: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu obrazca za strošek je prišlo do napake.",
             )
                 .into_response()
         }
