@@ -81,3 +81,67 @@ pub async fn get_expenses_for_user(
         .all(db)
         .await
 }
+
+pub async fn find_expense_by_id(
+    db: &DatabaseConnection,
+    expense_id: i32,
+) -> Result<Option<expenses::Model>, sea_orm::DbErr> {
+    expenses::Entity::find_by_id(expense_id).one(db).await
+}
+
+// deleži posameznega stroška
+pub async fn get_expense_splits(
+    db: &DatabaseConnection,
+    expense_id: i32,
+) -> Result<Vec<expense_splits::Model>, sea_orm::DbErr> {
+    expense_splits::Entity::find()
+        .filter(expense_splits::Column::ExpenseId.eq(expense_id))
+        .all(db)
+        .await
+}
+
+// sprememba opisa stroška
+pub async fn update_expense_description(
+    db: &DatabaseConnection,
+    expense_id: i32,
+    description: &str,
+) -> Result<expenses::Model, sea_orm::DbErr> {
+    let description = description.trim();
+
+    if description.is_empty() {
+        // ne sme bit prazen
+        return Err(sea_orm::DbErr::Custom(
+            "Opis stroška ne sme biti prazen.".to_string(),
+        ));
+    }
+
+    let expense = expenses::ActiveModel {
+        id: Set(expense_id),
+        description: Set(description.to_string()), // spremeni se samo opis
+        ..Default::default()
+    };
+
+    expense.update(db).await
+}
+
+// brisanje stroška skupaj z njegovimi deleži
+pub async fn delete_expense(
+    db: &DatabaseConnection,
+    expense_id: i32,
+) -> Result<(), sea_orm::DbErr> {
+    let transaction = db.begin().await?; // brez deležev strošek ne sme ostati
+
+    expense_splits::Entity::delete_many()
+        .filter(expense_splits::Column::ExpenseId.eq(expense_id))
+        .exec(&transaction)
+        .await?;
+
+    expenses::Entity::delete_many()
+        .filter(expenses::Column::Id.eq(expense_id))
+        .exec(&transaction)
+        .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
+}

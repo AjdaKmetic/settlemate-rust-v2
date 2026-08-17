@@ -1,4 +1,4 @@
-<div class="tab-panel">
+<div id="activity-panel" class="tab-panel">
     <div class="section-header">
         <h2>Aktivnost</h2>
     </div>
@@ -9,7 +9,12 @@
         </div>
     {% else %}
         {% for activity in activities %}
-            <div class="list-row{% if loop.last %} last{% endif %}">
+            <div
+                class="list-row{% if loop.last %} last{% endif %}"
+                hx-get="/expenses/{{ activity.id }}"
+                hx-target="#activity-panel"
+                hx-swap="outerHTML"
+            >
                 <div class="activity-icon">
                     €
                 </div>
@@ -33,3 +38,5 @@
         {% endfor %}
     {% endif %}
 </div>
+
+<div id="modal-root" hx-swap-oob="true"></div>

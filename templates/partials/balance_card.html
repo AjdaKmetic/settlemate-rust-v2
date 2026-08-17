@@ -1,7 +1,4 @@
-<div
-    id="balance-card"
-    class="balance-card {{ balance_state_class }}"
->
+<div id="balance-card" class="balance-card {{ balance_state_class }}"{% if oob %} hx-swap-oob="true"{% endif %}>
     <div class="balance-icon">
         <svg
             class="icon-text"

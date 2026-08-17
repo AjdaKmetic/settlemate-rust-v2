@@ -27,36 +27,45 @@ struct IndexTemplate {
     balance_state_class: &'static str,
     balance_label: &'static str,
     formatted_balance: String,
+    oob: bool,
     friends: Vec<FriendView>,
     groups: Vec<groups::Model>,
     active_tab: &'static str,
     activities: Vec<ActivityItem>,
 }
 
+// izračun oznak in oblike za prikaz stanja
+pub fn balance_view(balance_cents: i64) -> (&'static str, &'static str, String) {
+    let (state_class, label) = if balance_cents > 0 {
+        ("balance-positive", "Prejmeš")
+    } else if balance_cents < 0 {
+        ("balance-negative", "Dolguješ")
+    } else {
+        (
+            "balance-neutral",
+            "Vse štima", // Brez dolgov
+        )
+    };
+
+    let absolute = balance_cents.unsigned_abs();
+    let euros = absolute / 100;
+    let cents = absolute % 100;
+
+    let formatted = format!("{euros},{cents:02} €");
+
+    (state_class, label, formatted)
+}
+
 impl IndexTemplate {
     fn new(username: String, balance_cents: i64, friends: Vec<FriendView>) -> Self {
-        let (balance_state_class, balance_label) = if balance_cents > 0 {
-            ("balance-positive", "Prejmeš")
-        } else if balance_cents < 0 {
-            ("balance-negative", "Dolguješ")
-        } else {
-            (
-                "balance-neutral",
-                "Vse štima", // Brez dolgov
-            )
-        };
-
-        let absolute = balance_cents.unsigned_abs();
-        let euros = absolute / 100;
-        let cents = absolute % 100;
-
-        let formatted_balance = format!("{euros},{cents:02} €");
+        let (balance_state_class, balance_label, formatted_balance) = balance_view(balance_cents);
 
         Self {
             username,
             balance_state_class,
             balance_label,
             formatted_balance,
+            oob: false, // na začetni strani se kartica izriše na svojem mestu
             friends,
             groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
             active_tab: "friends",

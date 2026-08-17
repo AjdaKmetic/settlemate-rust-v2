@@ -1,0 +1,38 @@
+<div id="activity-panel" class="tab-panel">
+
+    <div class="section-header">
+        <h2>Uredi opis</h2>
+    </div>
+
+    <form
+        class="inline-form"
+        hx-post="/expenses/{{ expense.id }}/description"
+        hx-target="#activity-panel"
+        hx-swap="outerHTML"
+    >
+        <input
+            type="text"
+            name="description"
+            value="{{ expense.description }}"
+            required
+        >
+
+        <button
+            type="submit"
+            class="btn-create"
+        >
+            Shrani
+        </button>
+
+        <button
+            type="button"
+            class="btn-cancel"
+            hx-get="/expenses/{{ expense.id }}"
+            hx-target="#activity-panel"
+            hx-swap="outerHTML"
+        >
+            Prekliči
+        </button>
+    </form>
+
+</div>
