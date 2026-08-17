@@ -10,6 +10,7 @@ use crate::{
     app::state::AppState,
     handlers::{
         auth::get_current_user,
+        errors::internal_error,
         friends::{FriendView, get_friend_views},
     },
     services::{
@@ -59,13 +60,11 @@ pub async fn settle_debt_handler(
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju prijateljev",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -73,13 +72,11 @@ pub async fn settle_debt_handler(
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o prijateljih",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -87,13 +84,11 @@ pub async fn settle_debt_handler(
         Ok(balance) => balance,
 
         Err(error) => {
-            eprintln!("Napaka pri izračunu stanja uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri izračunu stanja uporabnika",
+                error,
                 "Pri izračunu stanja uporabnika je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -119,14 +114,10 @@ pub async fn settle_debt_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu poravnave dolga: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri poravnavi dolga je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu poravnave dolga",
+            error,
+            "Pri poravnavi dolga je prišlo do napake.",
+        ),
     }
 }

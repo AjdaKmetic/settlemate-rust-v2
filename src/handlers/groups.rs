@@ -15,7 +15,11 @@ use serde::Deserialize;
 use crate::{
     app::state::AppState,
     entities::{groups, users},
-    handlers::{auth::get_current_user, confirm::ConfirmModalTemplate},
+    handlers::{
+        auth::get_current_user,
+        confirm::ConfirmModalTemplate,
+        errors::{db_error_message, internal_error},
+    },
     services::{
         balance_service::{get_balance_in_group, get_balance_with_user_in_group},
         group_service::{
@@ -195,15 +199,11 @@ fn render_group_member_form(group: groups::Model, error_message: &str) -> Respon
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za člana: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu obrazca za člana",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -229,15 +229,11 @@ pub async fn group_form() -> Response {
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za skupino: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu obrazca za skupino",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -274,38 +270,32 @@ pub async fn create_group_handler(
         Ok(group) => group,
 
         Err(error) => {
-            eprintln!("Napaka pri ustvarjanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri ustvarjanju skupine",
+                error,
                 "Pri ustvarjanju skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
     // ustvarjalec postane član skupine
     if let Err(error) = add_member_to_group(&state.db, group.id, user.id).await {
-        eprintln!("Napaka pri dodajanju uporabnika v skupino: {error}");
-
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return internal_error(
+            "Napaka pri dodajanju uporabnika v skupino",
+            error,
             "Pri ustvarjanju skupine je prišlo do napake.",
-        )
-            .into_response();
+        );
     }
 
     let groups = match get_groups_for_user(&state.db, user.id).await {
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju skupin: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju skupin",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -313,13 +303,11 @@ pub async fn create_group_handler(
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o skupinah",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -328,15 +316,11 @@ pub async fn create_group_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu skupin: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu skupin",
+            error,
+            "Pri prikazu skupin je prišlo do napake.",
+        ),
     }
 }
 
@@ -372,13 +356,11 @@ pub async fn group_detail(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -386,13 +368,11 @@ pub async fn group_detail(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju članov skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju članov skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -400,13 +380,11 @@ pub async fn group_detail(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o članih skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o članih skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -415,15 +393,11 @@ pub async fn group_detail(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu skupine: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu skupine",
+            error,
+            "Pri prikazu skupine je prišlo do napake.",
+        ),
     }
 }
 
@@ -459,13 +433,11 @@ pub async fn group_member_form(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju skupine",
+                error,
                 "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -505,13 +477,11 @@ pub async fn add_group_member_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -532,40 +502,34 @@ pub async fn add_group_member_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju uporabnika",
+                error,
                 "Pri dodajanju člana je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
     if let Err(error) = add_member_to_group(&state.db, group_id, member.id).await {
-        return match error {
-            // sporočilo iz servisa prikažemo v obrazcu
-            sea_orm::DbErr::Custom(message) => render_group_member_form(group, &message),
+        // sporočilo iz servisa prikažemo v obrazcu
+        let message = db_error_message(
+            "Napaka pri dodajanju uporabnika v skupino",
+            error,
+            "Uporabnika ni bilo mogoče dodati v skupino.",
+        );
 
-            other => {
-                eprintln!("Napaka pri dodajanju uporabnika v skupino: {other}");
-
-                render_group_member_form(group, "Uporabnika ni bilo mogoče dodati v skupino.")
-            }
-        };
+        return render_group_member_form(group, &message);
     }
 
     let members = match get_group_members(&state.db, group_id).await {
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju članov skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju članov skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -573,13 +537,11 @@ pub async fn add_group_member_handler(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o članih skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o članih skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -588,15 +550,11 @@ pub async fn add_group_member_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu skupine: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu skupine",
+            error,
+            "Pri prikazu skupine je prišlo do napake.",
+        ),
     }
 }
 
@@ -632,13 +590,11 @@ pub async fn group_leave_form(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju skupine",
+                error,
                 "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -646,13 +602,11 @@ pub async fn group_leave_form(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju članov skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju članov skupine",
+                error,
                 "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -676,15 +630,11 @@ pub async fn group_leave_form(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu potrditve za zapustitev skupine: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu potrditve za zapustitev skupine",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -720,13 +670,11 @@ pub async fn group_delete_form(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju skupine",
+                error,
                 "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -742,15 +690,11 @@ pub async fn group_delete_form(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu potrditve za brisanje skupine: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu potrditve za brisanje skupine",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -786,13 +730,11 @@ pub async fn leave_group_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri preverjanju članstva v skupini: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri preverjanju članstva v skupini",
+                error,
                 "Pri zapuščanju skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     }
 
@@ -800,38 +742,32 @@ pub async fn leave_group_handler(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju članov skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju članov skupine",
+                error,
                 "Pri zapuščanju skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
     let was_last = members.len() <= 1;
 
     if let Err(error) = remove_member_from_group(&state.db, group_id, user.id).await {
-        eprintln!("Napaka pri odstranjevanju uporabnika iz skupine: {error}");
-
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return internal_error(
+            "Napaka pri odstranjevanju uporabnika iz skupine",
+            error,
             "Pri zapuščanju skupine je prišlo do napake.",
-        )
-            .into_response();
+        );
     }
 
     // odšel je zadnji član, zato skupino izbrišemo
     if was_last {
         if let Err(error) = delete_group(&state.db, group_id).await {
-            eprintln!("Napaka pri brisanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri brisanju skupine",
+                error,
                 "Pri zapuščanju skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     }
 
@@ -839,13 +775,11 @@ pub async fn leave_group_handler(
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju skupin: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju skupin",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -853,13 +787,11 @@ pub async fn leave_group_handler(
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o skupinah",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -868,15 +800,11 @@ pub async fn leave_group_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu skupin: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu skupin",
+            error,
+            "Pri prikazu skupin je prišlo do napake.",
+        ),
     }
 }
 
@@ -912,37 +840,31 @@ pub async fn delete_group_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri preverjanju članstva v skupini: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri preverjanju članstva v skupini",
+                error,
                 "Pri brisanju skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     }
 
     if let Err(error) = delete_group(&state.db, group_id).await {
-        eprintln!("Napaka pri brisanju skupine: {error}");
-
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return internal_error(
+            "Napaka pri brisanju skupine",
+            error,
             "Pri brisanju skupine je prišlo do napake.",
-        )
-            .into_response();
+        );
     }
 
     let groups = match get_groups_for_user(&state.db, user.id).await {
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju skupin: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju skupin",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -950,13 +872,11 @@ pub async fn delete_group_handler(
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o skupinah",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -965,15 +885,11 @@ pub async fn delete_group_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu skupin: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu skupin",
+            error,
+            "Pri prikazu skupin je prišlo do napake.",
+        ),
     }
 }
 
@@ -1022,13 +938,11 @@ pub async fn settle_group_debt_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -1037,13 +951,11 @@ pub async fn settle_group_debt_handler(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju članov skupine: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju članov skupine",
+                error,
                 "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -1052,13 +964,11 @@ pub async fn settle_group_debt_handler(
             Ok(members) => members,
 
             Err(error) => {
-                eprintln!("Napaka pri pripravi podatkov o članih skupine: {error}");
-
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
+                return internal_error(
+                    "Napaka pri pripravi podatkov o članih skupine",
+                    error,
                     "Pri prikazu skupine je prišlo do napake.",
-                )
-                    .into_response();
+                );
             }
         };
 
@@ -1067,14 +977,10 @@ pub async fn settle_group_debt_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu skupine: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu skupine je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu skupine",
+            error,
+            "Pri prikazu skupine je prišlo do napake.",
+        ),
     }
 }

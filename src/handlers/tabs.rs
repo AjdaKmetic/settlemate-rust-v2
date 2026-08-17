@@ -15,6 +15,7 @@ use crate::{
     entities::users,
     handlers::{
         auth::get_current_user,
+        errors::internal_error,
         expenses::{ActivityItem, build_activities},
         friends::{FriendView, get_friend_views},
         groups::{GroupView, get_group_views},
@@ -62,13 +63,11 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju prijateljev",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -76,13 +75,11 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o prijateljih",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -96,15 +93,11 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu zavihka: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu zavihka je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu zavihka",
+            error,
+            "Pri prikazu zavihka je prišlo do napake.",
+        ),
     }
 }
 
@@ -132,13 +125,11 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju skupin: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju skupin",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -146,13 +137,11 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o skupinah: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o skupinah",
+                error,
                 "Pri prikazu skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -166,15 +155,11 @@ pub async fn groups_tab(State(state): State<AppState>, jar: CookieJar) -> Respon
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu zavihka: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu zavihka je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu zavihka",
+            error,
+            "Pri prikazu zavihka je prišlo do napake.",
+        ),
     }
 }
 
@@ -202,13 +187,11 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
         Ok(expenses) => expenses,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju aktivnosti: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju aktivnosti",
+                error,
                 "Pri prikazu aktivnosti je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -221,13 +204,11 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
         Ok(payers) => payers,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju plačnikov: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju plačnikov",
+                error,
                 "Pri prikazu aktivnosti je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -246,14 +227,10 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu zavihka: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu zavihka je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu zavihka",
+            error,
+            "Pri prikazu zavihka je prišlo do napake.",
+        ),
     }
 }

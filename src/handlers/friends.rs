@@ -18,6 +18,7 @@ use crate::{
     handlers::{
         auth::get_current_user,
         confirm::ConfirmModalTemplate,
+        errors::{db_error_message, internal_error},
         expenses::{ActivityItem, build_activities},
     },
     services::{
@@ -118,15 +119,11 @@ fn render_friend_form(error_message: &str) -> Response {
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za prijatelja: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu obrazca za prijatelja",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -172,40 +169,34 @@ pub async fn add_friend_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju uporabnika",
+                error,
                 "Pri dodajanju prijatelja je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
     if let Err(error) = add_friend(&state.db, user.id, friend.id).await {
-        return match error {
-            // sporočilo iz servisa prikažemo v obrazcu
-            sea_orm::DbErr::Custom(message) => render_friend_form(&message),
+        // sporočilo iz servisa prikažemo v obrazcu
+        let message = db_error_message(
+            "Napaka pri dodajanju prijatelja",
+            error,
+            "Pri dodajanju prijatelja je prišlo do napake.",
+        );
 
-            other => {
-                eprintln!("Napaka pri dodajanju prijatelja: {other}");
-
-                render_friend_form("Pri dodajanju prijatelja je prišlo do napake.")
-            }
-        };
+        return render_friend_form(&message);
     }
 
     let friends = match get_friends(&state.db, user.id).await {
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju prijateljev",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -213,13 +204,11 @@ pub async fn add_friend_handler(
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o prijateljih",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -228,15 +217,11 @@ pub async fn add_friend_handler(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu prijateljev: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu prijateljev",
+            error,
+            "Pri prikazu prijateljev je prišlo do napake.",
+        ),
     }
 }
 
@@ -272,13 +257,11 @@ pub async fn friend_detail(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju uporabnika",
+                error,
                 "Pri prikazu prijatelja je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -290,13 +273,11 @@ pub async fn friend_detail(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri preverjanju prijateljstva: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri preverjanju prijateljstva",
+                error,
                 "Pri prikazu prijatelja je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     }
 
@@ -304,13 +285,11 @@ pub async fn friend_detail(
         Ok(balance) => balance,
 
         Err(error) => {
-            eprintln!("Napaka pri izračunu stanja med prijateljema: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri izračunu stanja med prijateljema",
+                error,
                 "Pri prikazu prijatelja je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -318,13 +297,11 @@ pub async fn friend_detail(
         Ok(expenses) => expenses,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju skupnih stroškov: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju skupnih stroškov",
+                error,
                 "Pri prikazu skupnih stroškov je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -337,13 +314,11 @@ pub async fn friend_detail(
         Ok(payers) => payers,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju plačnikov: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju plačnikov",
+                error,
                 "Pri prikazu skupnih stroškov je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -362,15 +337,11 @@ pub async fn friend_detail(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu prijatelja: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu prijatelja je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu prijatelja",
+            error,
+            "Pri prikazu prijatelja je prišlo do napake.",
+        ),
     }
 }
 
@@ -410,15 +381,11 @@ pub async fn friend_delete_form(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu potrditve za odstranitev prijatelja: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu potrditve za odstranitev prijatelja",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -450,13 +417,11 @@ pub async fn remove_friend_handler(
         Ok(balance) => balance,
 
         Err(error) => {
-            eprintln!("Napaka pri izračunu stanja med prijateljema: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri izračunu stanja med prijateljema",
+                error,
                 "Pri odstranjevanju prijatelja je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -469,26 +434,22 @@ pub async fn remove_friend_handler(
     }
 
     if let Err(error) = remove_friend(&state.db, user.id, friend_id).await {
-        eprintln!("Napaka pri odstranjevanju prijatelja: {error}");
-
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return internal_error(
+            "Napaka pri odstranjevanju prijatelja",
+            error,
             "Pri odstranjevanju prijatelja je prišlo do napake.",
-        )
-            .into_response();
+        );
     }
 
     let friends = match get_friends(&state.db, user.id).await {
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju prijateljev",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -496,13 +457,11 @@ pub async fn remove_friend_handler(
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o prijateljih",
+                error,
                 "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -515,14 +474,10 @@ pub async fn remove_friend_handler(
             Html(response).into_response()
         }
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu prijateljev: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu prijateljev je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu prijateljev",
+            error,
+            "Pri prikazu prijateljev je prišlo do napake.",
+        ),
     }
 }

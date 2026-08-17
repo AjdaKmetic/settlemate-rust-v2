@@ -1,6 +1,7 @@
 pub mod account;
 pub mod auth;
 pub mod confirm;
+pub mod errors;
 pub mod expenses;
 pub mod friends;
 pub mod groups;

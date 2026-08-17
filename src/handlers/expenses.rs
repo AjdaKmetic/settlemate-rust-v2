@@ -13,7 +13,12 @@ use std::collections::HashMap;
 use crate::{
     app::state::AppState,
     entities::{expenses, groups, users},
-    handlers::{auth::get_current_user, confirm::ConfirmModalTemplate, index::balance_view},
+    handlers::{
+        auth::get_current_user,
+        confirm::ConfirmModalTemplate,
+        errors::{db_error_message, internal_error},
+        index::balance_view,
+    },
     services::{
         balance_service::get_balance,
         expense_service::{
@@ -191,13 +196,11 @@ async fn render_expense_detail(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju stroška: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju stroška",
+                error,
                 "Pri prikazu stroška je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -205,13 +208,11 @@ async fn render_expense_detail(
         Ok(splits) => splits,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju deležev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju deležev",
+                error,
                 "Pri prikazu stroška je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -225,13 +226,11 @@ async fn render_expense_detail(
         Ok(members) => members,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju uporabnikov: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju uporabnikov",
+                error,
                 "Pri prikazu stroška je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -279,15 +278,11 @@ async fn render_expense_detail(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu stroška: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu stroška je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu stroška",
+            error,
+            "Pri prikazu stroška je prišlo do napake.",
+        ),
     }
 }
 
@@ -316,13 +311,11 @@ pub async fn expense_form(State(state): State<AppState>, jar: CookieJar) -> Resp
         Ok(participants) => participants,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju prijateljev",
+                error,
                 "Pri prikazu obrazca za strošek je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -331,15 +324,11 @@ pub async fn expense_form(State(state): State<AppState>, jar: CookieJar) -> Resp
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za strošek: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca za strošek je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu obrazca za strošek",
+            error,
+            "Pri prikazu obrazca za strošek je prišlo do napake.",
+        ),
     }
 }
 
@@ -385,13 +374,11 @@ pub async fn create_expense_handler(
                 Ok(members) => members,
 
                 Err(error) => {
-                    eprintln!("Napaka pri pridobivanju članov skupine: {error}");
-
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
+                    return internal_error(
+                        "Napaka pri pridobivanju članov skupine",
+                        error,
                         "Pri pridobivanju članov skupine je prišlo do napake.",
-                    )
-                        .into_response();
+                    );
                 }
             };
 
@@ -422,9 +409,14 @@ pub async fn create_expense_handler(
         Ok(_) => Redirect::to("/").into_response(),
 
         Err(error) => {
-            eprintln!("Napaka pri shranjevanju stroška: {error}");
+            // sporočilo iz servisa prikažemo uporabniku
+            let message = db_error_message(
+                "Napaka pri shranjevanju stroška",
+                error,
+                "Stroška ni bilo mogoče ustvariti.",
+            );
 
-            (StatusCode::BAD_REQUEST, error.to_string()).into_response()
+            (StatusCode::BAD_REQUEST, message).into_response()
         }
     }
 }
@@ -509,13 +501,11 @@ pub async fn expense_description_form(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju stroška: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju stroška",
+                error,
                 "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -524,15 +514,11 @@ pub async fn expense_description_form(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za opis stroška: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu obrazca za opis stroška",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -569,20 +555,23 @@ pub async fn update_expense_description_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri preverjanju udeležbe v strošku: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri preverjanju udeležbe v strošku",
+                error,
                 "Pri spreminjanju opisa je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     }
 
     if let Err(error) = update_expense_description(&state.db, expense_id, &form.description).await {
-        eprintln!("Napaka pri spreminjanju opisa stroška: {error}");
+        // sporočilo iz servisa prikažemo uporabniku
+        let message = db_error_message(
+            "Napaka pri spreminjanju opisa stroška",
+            error,
+            "Opisa ni bilo mogoče posodobiti.",
+        );
 
-        return (StatusCode::BAD_REQUEST, error.to_string()).into_response();
+        return (StatusCode::BAD_REQUEST, message).into_response();
     }
 
     // urejanje je na voljo le iz zavihka Aktivnost
@@ -630,13 +619,11 @@ pub async fn expense_delete_form(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri iskanju stroška: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri iskanju stroška",
+                error,
                 "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -652,15 +639,11 @@ pub async fn expense_delete_form(
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu potrditve za brisanje stroška: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu potrditve za brisanje stroška",
+            error,
+            "Pri prikazu obrazca je prišlo do napake.",
+        ),
     }
 }
 
@@ -696,24 +679,20 @@ pub async fn delete_expense_handler(
         }
 
         Err(error) => {
-            eprintln!("Napaka pri preverjanju udeležbe v strošku: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri preverjanju udeležbe v strošku",
+                error,
                 "Pri brisanju stroška je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     }
 
     if let Err(error) = delete_expense(&state.db, expense_id).await {
-        eprintln!("Napaka pri brisanju stroška: {error}");
-
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return internal_error(
+            "Napaka pri brisanju stroška",
+            error,
             "Pri brisanju stroška je prišlo do napake.",
-        )
-            .into_response();
+        );
     }
 
     // po brisanju izrišemo osvežen seznam aktivnosti
@@ -721,13 +700,11 @@ pub async fn delete_expense_handler(
         Ok(expenses) => expenses,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju aktivnosti: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju aktivnosti",
+                error,
                 "Pri prikazu aktivnosti je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -739,13 +716,11 @@ pub async fn delete_expense_handler(
         Ok(payers) => payers,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju plačnikov: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju plačnikov",
+                error,
                 "Pri prikazu aktivnosti je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -762,13 +737,11 @@ pub async fn delete_expense_handler(
         Ok(html) => html,
 
         Err(error) => {
-            eprintln!("Napaka pri izrisu aktivnosti: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri izrisu aktivnosti",
+                error,
                 "Pri prikazu aktivnosti je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -777,13 +750,11 @@ pub async fn delete_expense_handler(
         Ok(balance) => balance,
 
         Err(error) => {
-            eprintln!("Napaka pri izračunu stanja uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri izračunu stanja uporabnika",
+                error,
                 "Pri izračunu stanja uporabnika je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -799,15 +770,11 @@ pub async fn delete_expense_handler(
     match balance_template.render() {
         Ok(balance_html) => Html(format!("{activity_html}{balance_html}")).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu stanja uporabnika: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu stanja uporabnika je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu stanja uporabnika",
+            error,
+            "Pri prikazu stanja uporabnika je prišlo do napake.",
+        ),
     }
 }
 
@@ -834,13 +801,11 @@ pub async fn expense_group_form(State(state): State<AppState>, jar: CookieJar) -
         Ok(groups) => groups,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju skupin: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju skupin",
+                error,
                 "Pri pridobivanju skupin je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -849,15 +814,11 @@ pub async fn expense_group_form(State(state): State<AppState>, jar: CookieJar) -
     match template.render() {
         Ok(html) => Html(html).into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za skupinski strošek: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca za strošek je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu obrazca za skupinski strošek",
+            error,
+            "Pri prikazu obrazca za strošek je prišlo do napake.",
+        ),
     }
 }
 

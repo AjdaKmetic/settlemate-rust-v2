@@ -11,7 +11,7 @@ use serde::Deserialize;
 
 use crate::{
     app::state::AppState,
-    handlers::auth::get_current_user,
+    handlers::{auth::get_current_user, errors::internal_error},
     services::{
         password_service::verify_password,
         user_service::{update_user_name, update_user_password},
@@ -68,16 +68,12 @@ pub async fn account_page(State(state): State<AppState>, jar: CookieJar) -> Resp
     match template.render() {
         Ok(html) => Html(html).into_response(), // izris uspe
 
-        Err(error) => {
-            // ce se predloga ne more izrisati
-            eprintln!("Napaka pri izrisu strani računa: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu računa je prišlo do napake.",
-            )
-                .into_response()
-        }
+        // ce se predloga ne more izrisati
+        Err(error) => internal_error(
+            "Napaka pri izrisu strani računa",
+            error,
+            "Pri prikazu računa je prišlo do napake.",
+        ),
     }
 }
 
@@ -113,15 +109,11 @@ pub async fn update_name(
     match update_user_name(&state.db, user.id, &form.name).await {
         Ok(_) => Redirect::to("/account").into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri spreminjanju imena: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Imena ni bilo mogoče spremeniti.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri spreminjanju imena",
+            error,
+            "Imena ni bilo mogoče spremeniti.",
+        ),
     }
 }
 
@@ -182,14 +174,10 @@ pub async fn change_password(
     {
         Ok(_) => Redirect::to("/account").into_response(),
 
-        Err(error) => {
-            eprintln!("Napaka pri spreminjanju gesla: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Gesla ni bilo mogoče spremeniti.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri spreminjanju gesla",
+            error,
+            "Gesla ni bilo mogoče spremeniti.",
+        ),
     }
 }

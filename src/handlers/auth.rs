@@ -13,6 +13,7 @@ use serde::Deserialize;
 use crate::{
     app::state::AppState,
     entities::users,
+    handlers::errors::internal_error,
     services::{
         session_service::{create_session, delete_session, find_session_by_token},
         user_service::{
@@ -326,13 +327,11 @@ pub async fn logout_user(State(state): State<AppState>, jar: CookieJar) -> Respo
 
     // brisanje seje iz baze
     if let Err(error) = delete_session(&state.db, token).await {
-        eprintln!("Napaka pri brisanju seje: {error}");
-
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return internal_error(
+            "Napaka pri brisanju seje",
+            error,
             "Pri odjavi je prišlo do napake. Poskusite znova.",
-        )
-            .into_response();
+        );
     }
 
     // odstranitev cookie-ja iz brskalnika

@@ -12,6 +12,7 @@ use crate::{
     app::state::AppState,
     handlers::{
         auth::get_current_user,
+        errors::internal_error,
         expenses::ActivityItem,
         friends::{FriendView, get_friend_views},
         groups::GroupView,
@@ -102,13 +103,11 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pridobivanju prijateljev",
+                error,
                 "Pri prikazu začetne strani je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -116,13 +115,11 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         Ok(friends) => friends,
 
         Err(error) => {
-            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri pripravi podatkov o prijateljih",
+                error,
                 "Pri prikazu začetne strani je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -130,13 +127,11 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
         Ok(balance) => balance,
 
         Err(error) => {
-            eprintln!("Napaka pri izračunu stanja uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return internal_error(
+                "Napaka pri izračunu stanja uporabnika",
+                error,
                 "Pri izračunu stanja uporabnika je prišlo do napake.",
-            )
-                .into_response();
+            );
         }
     };
 
@@ -145,15 +140,11 @@ pub async fn index(State(state): State<AppState>, jar: CookieJar) -> Response {
     match template.render() {
         Ok(html) => Html(html).into_response(), // = (StatusCode::OK, Html(html)).into_response()
 
-        Err(error) => {
-            eprintln!("Napaka pri izrisu začetne strani: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu začetne strani je prišlo do napake.",
-            )
-                .into_response()
-        }
+        Err(error) => internal_error(
+            "Napaka pri izrisu začetne strani",
+            error,
+            "Pri prikazu začetne strani je prišlo do napake.",
+        ),
     }
 }
 
