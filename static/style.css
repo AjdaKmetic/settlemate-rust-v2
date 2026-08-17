@@ -502,6 +502,18 @@ body {
     width: 100%;
 }
 
+.auth-form .checkbox-row {
+    flex-direction: row;
+    align-items: center;
+    font-weight: 500;
+}
+
+.auth-form .checkbox-row input[type="checkbox"] {
+    width: auto;
+    padding: 0;
+    accent-color: var(--color-primary);
+}
+
 .activity-icon {
     background: var(--category-activity-bg);
     border: 1px solid var(--category-activity-border);

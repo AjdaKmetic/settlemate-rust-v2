@@ -7,26 +7,26 @@
         <div class="form-actions">
             <button
                 type="button"
-                class="btn-create"
-                disabled
+                class="btn-cancel"
+                hx-get="/expenses/form"
+                hx-target="#modal-root"
+                hx-swap="innerHTML"
             >
                 Z uporabniki
             </button>
 
             <button
                 type="button"
-                class="btn-cancel"
-                hx-get="/expenses/form/group"
-                hx-target="#modal-root"
-                hx-swap="innerHTML"
+                class="btn-create"
+                disabled
             >
                 S skupino
             </button>
         </div>
 
-        {% if participants.is_empty() %}
+        {% if groups.is_empty() %}
             <p class="auth-error">
-                Pred dodajanjem stroška dodaj vsaj enega prijatelja.
+                Pred dodajanjem skupinskega stroška ustvari skupino.
             </p>
 
             <button
@@ -68,7 +68,21 @@
                     >
                 </label>
 
-                {% include "partials/expense_participants.html" %}
+                <label>
+                    Skupina
+
+                    <select name="group_id" required>
+                        <option value="" disabled selected>
+                            Izberi skupino
+                        </option>
+
+                        {% for group in groups %}
+                            <option value="{{ group.id }}">
+                                {{ group.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
 
                 <div class="form-actions">
                     <button

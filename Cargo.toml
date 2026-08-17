@@ -16,7 +16,7 @@ dotenvy = "0.15"
 migration = { path = "migration" }
 
 axum = "0.8"
-axum-extra = { version = "0.10", features = ["cookie"] }
+axum-extra = { version = "0.10", features = ["cookie", "form"] }
 askama = "0.14"
 serde = { version = "1", features = ["derive"] }
 uuid = { version = "1", features = ["v4"] }

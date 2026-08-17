@@ -12,44 +12,19 @@ use sea_orm::Database;
 use app::state::AppState;
 use handlers::{
     account::{account_page, change_password, update_name},
-    auth::{
-        login_form,
-        login_user,
-        logout_user,
-        register_form,
-        register_user,
-    },
-    friends::{
-        add_friend_handler,
-        friend_form,
-    },
-    groups::{
-        add_group_member_handler,
-        create_group_handler,
-        delete_group_handler,
-        group_delete_form,
-        group_detail,
-        group_form,
-        group_leave_form,
-        group_member_form,
-        leave_group_handler,
-    },
+    auth::{login_form, login_user, logout_user, register_form, register_user},
     expenses::{
-        close_expense_form,
-        create_expense_handler,
-        delete_expense_handler,
-        expense_delete_form,
-        expense_description_form,
-        expense_detail,
-        expense_form,
+        close_expense_form, create_expense_handler, delete_expense_handler, expense_delete_form,
+        expense_description_form, expense_detail, expense_form, expense_group_form,
         update_expense_description_handler,
     },
-    index::index,
-    tabs::{
-        activity_tab,
-        friends_tab,
-        groups_tab,
+    friends::{add_friend_handler, friend_form},
+    groups::{
+        add_group_member_handler, create_group_handler, delete_group_handler, group_delete_form,
+        group_detail, group_form, group_leave_form, group_member_form, leave_group_handler,
     },
+    index::index,
+    tabs::{activity_tab, friends_tab, groups_tab},
 };
 
 use tower_http::services::ServeDir;
@@ -88,10 +63,17 @@ async fn main() {
         .route("/expenses/close", get(close_expense_form))
         .route("/expenses", post(create_expense_handler))
         .route("/expenses/{id}", get(expense_detail))
-        .route("/expenses/{id}/description/form", get(expense_description_form))
-        .route("/expenses/{id}/description", post(update_expense_description_handler))
+        .route(
+            "/expenses/{id}/description/form",
+            get(expense_description_form),
+        )
+        .route(
+            "/expenses/{id}/description",
+            post(update_expense_description_handler),
+        )
         .route("/expenses/{id}/delete/form", get(expense_delete_form))
         .route("/expenses/{id}/delete", post(delete_expense_handler))
+        .route("/expenses/form/group", get(expense_group_form))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 
