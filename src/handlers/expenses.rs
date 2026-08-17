@@ -1,7 +1,7 @@
 use askama::Template;
 use axum::{
     Form,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
 };
@@ -51,6 +51,12 @@ struct ExpenseDetailTemplate {
     payer_label: String,
     formatted_amount: String,
     splits: Vec<SplitRow>,
+
+    // od kod je bil strošek odprt, da se gumb Nazaj vrne na pravo stran
+    panel_id: String,
+    back_url: String,
+    back_target: String,
+    back_swap: String,
 }
 
 #[derive(Template)]
@@ -149,6 +155,13 @@ pub struct UpdateDescriptionForm {
     description: String,
 }
 
+// neobvezen kontekst: iz katere strani je bil strošek odprt
+#[derive(Deserialize)]
+pub struct ExpenseDetailQuery {
+    from: Option<String>,
+    friend_id: Option<i32>,
+}
+
 // preveri, ali je uporabnik udeležen v strošku
 async fn is_participant(
     db: &DatabaseConnection,
@@ -161,7 +174,15 @@ async fn is_participant(
 }
 
 // sestavljanje in izris podrobnosti stroška (uporabljeno pri prikazu in po urejanju)
-async fn render_expense_detail(state: &AppState, expense_id: i32, user_id: i32) -> Response {
+async fn render_expense_detail(
+    state: &AppState,
+    expense_id: i32,
+    user_id: i32,
+    panel_id: &str,
+    back_url: &str,
+    back_target: &str,
+    back_swap: &str,
+) -> Response {
     let expense = match find_expense_by_id(&state.db, expense_id).await {
         Ok(Some(expense)) => expense,
 
@@ -249,6 +270,10 @@ async fn render_expense_detail(state: &AppState, expense_id: i32, user_id: i32) 
         payer_label,
         formatted_amount,
         splits: split_rows,
+        panel_id: panel_id.to_string(),
+        back_url: back_url.to_string(),
+        back_target: back_target.to_string(),
+        back_swap: back_swap.to_string(),
     };
 
     match template.render() {
@@ -409,6 +434,7 @@ pub async fn expense_detail(
     State(state): State<AppState>,
     jar: CookieJar,
     Path(expense_id): Path<i32>,
+    Query(query): Query<ExpenseDetailQuery>,
 ) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
@@ -428,7 +454,27 @@ pub async fn expense_detail(
         }
     };
 
-    render_expense_detail(&state, expense_id, user.id).await
+    // odprt s strani prijatelja se vrne na prijatelja, sicer na aktivnost
+    let (panel_id, back_url, back_target) = match (query.from.as_deref(), query.friend_id) {
+        (Some("friends"), Some(friend_id)) => (
+            "friends-panel",
+            format!("/friends/{friend_id}"),
+            "#friends-panel",
+        ),
+
+        _ => ("activity-panel", "/tabs/activity".to_string(), "#tab-shell"),
+    };
+
+    render_expense_detail(
+        &state,
+        expense_id,
+        user.id,
+        panel_id,
+        &back_url,
+        back_target,
+        "outerHTML",
+    )
+    .await
 }
 
 // prikaz obrazca za urejanje opisa
@@ -539,7 +585,17 @@ pub async fn update_expense_description_handler(
         return (StatusCode::BAD_REQUEST, error.to_string()).into_response();
     }
 
-    render_expense_detail(&state, expense_id, user.id).await
+    // urejanje je na voljo le iz zavihka Aktivnost
+    render_expense_detail(
+        &state,
+        expense_id,
+        user.id,
+        "activity-panel",
+        "/tabs/activity",
+        "#tab-shell",
+        "outerHTML",
+    )
+    .await
 }
 
 // prikaz potrditve za brisanje stroška

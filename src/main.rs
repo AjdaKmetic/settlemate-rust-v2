@@ -18,7 +18,9 @@ use handlers::{
         expense_description_form, expense_detail, expense_form, expense_group_form,
         update_expense_description_handler,
     },
-    friends::{add_friend_handler, friend_delete_form, friend_form, remove_friend_handler},
+    friends::{
+        add_friend_handler, friend_delete_form, friend_detail, friend_form, remove_friend_handler,
+    },
     groups::{
         add_group_member_handler, 
         create_group_handler, 
@@ -56,6 +58,7 @@ async fn main() {
         .route("/tabs/activity", get(activity_tab))
         .route("/friends/form", get(friend_form))
         .route("/friends", post(add_friend_handler))
+        .route("/friends/{friend_id}", get(friend_detail))
         .route("/friends/{friend_id}/delete/form", get(friend_delete_form))
         .route("/friends/{friend_id}/delete", post(remove_friend_handler))
         .route("/groups/form", get(group_form))

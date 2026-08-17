@@ -20,13 +20,21 @@
     {% else %}
         {% for friend in friends %}
             <div class="list-row friend-row{% if loop.last %} last{% endif %}">
-                <div class="friend-avatar">
-                    {{ friend.name.chars().next().unwrap_or('?') }}
-                </div>
+                <div
+                    class="row-info"
+                    style="display: flex; align-items: center; gap: 14px; cursor: pointer"
+                    hx-get="/friends/{{ friend.id }}"
+                    hx-target="#friends-panel"
+                    hx-swap="outerHTML"
+                >
+                    <div class="friend-avatar">
+                        {{ friend.name.chars().next().unwrap_or('?') }}
+                    </div>
 
-                <div class="row-info">
-                    <p class="row-title">{{ friend.name }}</p>
-                    <p class="row-meta">@{{ friend.username }}</p>
+                    <div class="row-info">
+                        <p class="row-title">{{ friend.name }}</p>
+                        <p class="row-meta">@{{ friend.username }}</p>
+                    </div>
                 </div>
 
                 {% if friend.balance_cents < 0 %}
@@ -51,34 +59,6 @@
                         <p class="friend-balance-amount">{{ friend.formatted_balance }}</p>
                     </div>
                 {% endif %}
-
-                <details class="account-menu">
-                    <summary class="nav-user" title="Možnosti" aria-label="Možnosti">
-                        <svg
-                            class="account-chevron"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path d="m6 9 6 6 6-6"/>
-                        </svg>
-                    </summary>
-
-                    <div class="account-dropdown">
-                        <button
-                            type="button"
-                            class="account-menu-item"
-                            hx-get="/friends/{{ friend.id }}/delete/form"
-                            hx-target="#modal-root"
-                            hx-swap="innerHTML"
-                        >
-                            Odstrani prijatelja
-                        </button>
-                    </div>
-                </details>
             </div>
         {% endfor %}
     {% endif %}

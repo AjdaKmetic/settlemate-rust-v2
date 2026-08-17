@@ -111,6 +111,45 @@ pub async fn get_expenses_for_user(
         .await
 }
 
+// stroški, pri katerih sta udeležena oba uporabnika
+pub async fn get_shared_expenses(
+    db: &DatabaseConnection,
+    user_id: i32,
+    friend_id: i32,
+) -> Result<Vec<expenses::Model>, sea_orm::DbErr> {
+    let user_expense_ids: Vec<i32> = expense_splits::Entity::find()
+        .filter(expense_splits::Column::UserId.eq(user_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|split| split.expense_id)
+        .collect();
+
+    let friend_expense_ids: Vec<i32> = expense_splits::Entity::find()
+        .filter(expense_splits::Column::UserId.eq(friend_id))
+        .all(db)
+        .await?
+        .iter()
+        .map(|split| split.expense_id)
+        .collect();
+
+    // skupni so tisti stroški, ki se pojavijo pri obeh
+    let shared_expense_ids: Vec<i32> = user_expense_ids
+        .into_iter()
+        .filter(|expense_id| friend_expense_ids.contains(expense_id))
+        .collect();
+
+    if shared_expense_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    expenses::Entity::find()
+        .filter(expenses::Column::Id.is_in(shared_expense_ids))
+        .order_by_desc(expenses::Column::CreatedAt)
+        .all(db)
+        .await
+}
+
 pub async fn find_expense_by_id(
     db: &DatabaseConnection,
     expense_id: i32,

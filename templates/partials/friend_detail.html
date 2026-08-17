@@ -1,11 +1,15 @@
-<div id="{{ panel_id }}" class="tab-panel">
+<div id="friends-panel" class="tab-panel">
 
     <div class="section-header">
-        <h2>{{ expense.description }}</h2>
+
+        <div>
+            <h2>{{ friend.name }}</h2>
+            <p class="secondary-text">@{{ friend.username }}</p>
+        </div>
 
         <div class="form-actions">
             <details class="account-menu">
-                <summary class="nav-user" title="Nastavitve stroška" aria-label="Nastavitve stroška">
+                <summary class="nav-user" title="Možnosti prijatelja" aria-label="Možnosti prijatelja">
                     <span class="avatar">
                         <svg class="icon-text" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"/>
@@ -18,21 +22,11 @@
                     <button
                         type="button"
                         class="account-menu-item"
-                        hx-get="/expenses/{{ expense.id }}/description/form"
-                        hx-target="#activity-panel"
-                        hx-swap="outerHTML"
-                    >
-                        Uredi opis
-                    </button>
-
-                    <button
-                        type="button"
-                        class="account-menu-item"
-                        hx-get="/expenses/{{ expense.id }}/delete/form"
+                        hx-get="/friends/{{ friend.id }}/delete/form"
                         hx-target="#modal-root"
                         hx-swap="innerHTML"
                     >
-                        Izbriši strošek
+                        Odstrani prijatelja
                     </button>
                 </div>
             </details>
@@ -40,9 +34,9 @@
             <button
                 type="button"
                 class="btn-cancel"
-                hx-get="{{ back_url }}"
-                hx-target="{{ back_target }}"
-                hx-swap="{{ back_swap }}"
+                hx-get="/tabs/friends"
+                hx-target="#tab-shell"
+                hx-swap="outerHTML"
             >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Nazaj
@@ -52,57 +46,75 @@
 
     <div class="list-row last">
 
-        <div class="activity-icon">
-            €
+        <div class="friend-avatar">
+            {{ friend.name.chars().next().unwrap_or('?') }}
         </div>
 
         <div class="row-info">
             <p class="row-title">
-                Skupaj
-            </p>
-
-            <p class="row-meta">
-                Plačnik: {{ payer_label }}
+                Stanje
             </p>
         </div>
 
-        <div class="row-balance is-neutral">
-            <p class="amount">
-                {{ formatted_amount }}
-            </p>
-        </div>
+        {% if balance_cents < 0 %}
+            <div class="friend-balance is-negative">
+                <p class="friend-balance-label">Dolguješ</p>
+                <p class="friend-balance-amount">{{ formatted_balance }}</p>
+            </div>
+
+        {% else if balance_cents > 0 %}
+            <div class="friend-balance is-positive">
+                <p class="friend-balance-label">Prejmeš</p>
+                <p class="friend-balance-amount">{{ formatted_balance }}</p>
+            </div>
+
+        {% else %}
+            <div class="friend-balance">
+                <p class="friend-balance-label">Vse štima</p>
+                <p class="friend-balance-amount">{{ formatted_balance }}</p>
+            </div>
+        {% endif %}
 
     </div>
 
     <div class="section-header">
-        <h2>Razdelitev</h2>
+        <h2>Skupni stroški</h2>
     </div>
 
-    {% if splits.is_empty() %}
+    {% if expenses.is_empty() %}
 
         <div class="empty-state">
-            <p class="secondary-text">Strošek še ni razdeljen.</p>
+            <p class="secondary-text">Nimata še skupnih stroškov.</p>
         </div>
 
     {% else %}
 
-        {% for split in splits %}
+        {% for expense in expenses %}
 
-            <div class="list-row{% if loop.last %} last{% endif %}">
+            <div
+                class="list-row{% if loop.last %} last{% endif %}"
+                hx-get="/expenses/{{ expense.id }}?from=friends&friend_id={{ friend.id }}"
+                hx-target="#friends-panel"
+                hx-swap="outerHTML"
+            >
 
-                <div class="friend-avatar">
-                    {{ split.name.chars().next().unwrap_or('?') }}
+                <div class="activity-icon">
+                    €
                 </div>
 
                 <div class="row-info">
                     <p class="row-title">
-                        {{ split.name }}
+                        {{ expense.description }}
+                    </p>
+
+                    <p class="row-meta">
+                        Plačnik: {{ expense.payer_label }}
                     </p>
                 </div>
 
                 <div class="row-balance is-neutral">
                     <p class="amount">
-                        {{ split.amount }}
+                        {{ expense.formatted_amount }}
                     </p>
                 </div>
 
