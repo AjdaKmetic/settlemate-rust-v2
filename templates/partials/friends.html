@@ -30,42 +30,54 @@
                 </div>
 
                 {% if friend.balance_cents < 0 %}
-                    <div class="settle-area">
-                        <button
-                            type="button"
-                            class="btn-create settle-button"
-                            hx-post="/payments/settle/{{ friend.id }}"
-                            hx-target="#friends-panel"
-                            hx-swap="outerHTML"
-                        >
-                            Poravnaj dolg
-                        </button>
-
-                        <div class="row-balance is-negative">
-                            <p class="balance-note">Dolguješ</p>
-                            <p class="amount">{{ friend.formatted_balance }}</p>
-                        </div>
+                    <div class="friend-balance is-negative">
+                        <p class="friend-balance-label">Dolguješ</p>
+                        <p class="friend-balance-amount">{{ friend.formatted_balance }}</p>
                     </div>
-
-                {% else if friend.balance_cents > 0 %}
-                    <div class="row-balance is-positive">
-                        <p class="balance-note">Prejmeš</p>
-                        <p class="amount">{{ friend.formatted_balance }}</p>
-                    </div>
-                {% endif %}
-
-                <details class="friend-menu">
-                    <summary class="friend-menu-button">⋮</summary>
 
                     <button
                         type="button"
-                        class="account-menu-item"
-                        hx-get="/friends/{{ friend.id }}/delete/form"
-                        hx-target="#modal-root"
-                        hx-swap="innerHTML"
+                        class="btn-cancel settle-button"
+                        hx-post="/payments/settle/{{ friend.id }}"
+                        hx-target="#friends-panel"
+                        hx-swap="outerHTML"
                     >
-                        Odstrani prijatelja
+                        Poravnaj dolg
                     </button>
+
+                {% else if friend.balance_cents > 0 %}
+                    <div class="friend-balance is-positive">
+                        <p class="friend-balance-label">Prejmeš</p>
+                        <p class="friend-balance-amount">{{ friend.formatted_balance }}</p>
+                    </div>
+                {% endif %}
+
+                <details class="account-menu">
+                    <summary class="nav-user" title="Možnosti" aria-label="Možnosti">
+                        <svg
+                            class="account-chevron"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </summary>
+
+                    <div class="account-dropdown">
+                        <button
+                            type="button"
+                            class="account-menu-item"
+                            hx-get="/friends/{{ friend.id }}/delete/form"
+                            hx-target="#modal-root"
+                            hx-swap="innerHTML"
+                        >
+                            Odstrani prijatelja
+                        </button>
+                    </div>
                 </details>
             </div>
         {% endfor %}

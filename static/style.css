@@ -532,6 +532,7 @@ body {
 }
 
 .row-balance {
+    width: 90px;
     text-align: right;
     margin-right: 4px;
     flex-shrink: 0;
@@ -543,32 +544,16 @@ body {
     margin-bottom: 3px;
 }
 
-.balance-note {
-    font-size: 0.78rem;
-}
-
 .row-balance.is-positive .amount {
     color: var(--balance-positive-amount);
-}
-
-.row-balance.is-positive .balance-note {
-    color: var(--balance-positive-secondary);
 }
 
 .row-balance.is-neutral .amount {
     color: var(--balance-neutral-amount);
 }
 
-.row-balance.is-neutral .balance-note {
-    color: var(--balance-neutral-label);
-}
-
 .row-balance.is-negative .amount {
     color: var(--balance-negative-amount);
-}
-
-.row-balance.is-negative .balance-note {
-    color: var(--balance-negative-secondary);
 }
 
 /* ====================================
@@ -875,13 +860,6 @@ body {
     border-top: 1px solid var(--color-border);
 }
 
-.row-balance {
-    width: 90px;
-    text-align: right;
-    margin-right: 4px;
-    flex-shrink: 0;
-}
-
 /* ====================================
    seznam prijateljev
    ==================================== */
@@ -890,23 +868,33 @@ body {
     cursor: default;
 }
 
-.settle-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.friend-balance {
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.friend-balance-label {
+    font-size: 0.72rem;
+    font-weight: 400;
+}
+
+.friend-balance-amount {
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.friend-balance.is-positive {
+    color: var(--balance-positive-amount);
+}
+
+.friend-balance.is-negative {
+    color: var(--balance-negative-amount);
 }
 
 .settle-button {
     padding: 5px 10px;
     font-size: 0.75rem;
     white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(4px);
-    transition: opacity 0.15s;
-}
-
-.friend-row:hover .settle-button {
-    opacity: 1;
-    visibility: visible;
+    flex-shrink: 0;
 }
