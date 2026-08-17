@@ -804,3 +804,29 @@ pub async fn expense_group_form(State(state): State<AppState>, jar: CookieJar) -
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::parse_amount_to_cents;
+
+    #[test]
+    fn znesek_z_vejico_se_pravilno_pretvori_v_cente() {
+        assert_eq!(parse_amount_to_cents("12,50"), Ok(1250));
+    }
+
+    #[test]
+    fn najmanjsi_veljavni_znesek_je_en_cent() {
+        assert_eq!(parse_amount_to_cents("0,01"), Ok(1));
+    }
+
+    #[test]
+    fn neveljaven_znesek_je_zavrnjen() {
+        assert!(parse_amount_to_cents("abc").is_err());
+    }
+
+    #[test]
+    fn nepozitiven_znesek_je_zavrnjen() {
+        assert!(parse_amount_to_cents("0,00").is_err());
+        assert!(parse_amount_to_cents("-1,00").is_err());
+    }
+}

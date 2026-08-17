@@ -5,6 +5,26 @@ use sea_orm::{
 
 use crate::entities::{expense_splits, expenses};
 
+fn calculate_equal_shares(
+    amount_cents: i64,
+    participant_count: usize,
+) -> Result<(i64, i64), &'static str> {
+    if participant_count == 0 {
+        return Err("Izberi vsaj eno osebo za delitev stroška.");
+    }
+
+    let people_count = participant_count as i64 + 1;
+    let participant_share_cents = amount_cents / people_count;
+
+    if participant_share_cents == 0 {
+        return Err("Znesek je prenizek za izbrano število oseb.");
+    }
+
+    let payer_share_cents = amount_cents - participant_share_cents * participant_count as i64;
+
+    Ok((participant_share_cents, payer_share_cents))
+}
+
 pub async fn create_equal_expense(
     db: &DatabaseConnection,
     description: &str,
@@ -35,10 +55,9 @@ pub async fn create_equal_expense(
         ));
     }
 
-    let people_count = participant_ids.len() as i64 + 1;
-    let participant_share_cents = amount_cents / people_count;
-
-    let payer_share_cents = amount_cents - participant_share_cents * (people_count - 1);
+    let (participant_share_cents, payer_share_cents) =
+        calculate_equal_shares(amount_cents, participant_ids.len())
+            .map_err(|error_message| sea_orm::DbErr::Custom(error_message.to_string()))?;
 
     let transaction = db.begin().await?; // začne transakcijo, če kaj do konca ne uspe, se zavrže vse
 
@@ -154,4 +173,43 @@ pub async fn delete_expense(
     transaction.commit().await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::calculate_equal_shares;
+
+    #[test]
+    fn znesek_se_enakomerno_razdeli_brez_ostanka() {
+        let result = calculate_equal_shares(1200, 2);
+
+        assert_eq!(result, Ok((400, 400)));
+    }
+
+    #[test]
+    fn ostanek_centov_se_pripise_placniku() {
+        let result = calculate_equal_shares(1000, 2);
+
+        assert_eq!(result, Ok((333, 334)));
+    }
+
+    #[test]
+    fn prenizek_znesek_je_zavrnjen() {
+        let result = calculate_equal_shares(1, 1);
+
+        assert_eq!(
+            result,
+            Err("Znesek je prenizek za izbrano število oseb.")
+        );
+    }
+
+    #[test]
+    fn delitev_brez_druge_osebe_je_zavrnjena() {
+        let result = calculate_equal_shares(1000, 0);
+
+        assert_eq!(
+            result,
+            Err("Izberi vsaj eno osebo za delitev stroška.")
+        );
+    }
 }
