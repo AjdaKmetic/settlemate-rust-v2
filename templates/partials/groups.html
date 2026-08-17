@@ -17,7 +17,7 @@
     {% if groups.is_empty() %}
 
         <div class="empty-state">
-            <p class="secondary-text">Nimaš še nobene skupine.</p>
+            <p class="secondary-text">Nisi še v nobeni skupini.</p>
         </div>
 
     {% else %}
@@ -48,15 +48,15 @@
                 </div>
 
                 {% if group.balance_cents < 0 %}
-                    <div class="row-balance is-negative">
-                        <p class="balance-note">Dolguješ</p>
-                        <p class="amount">{{ group.formatted_balance }}</p>
+                    <div class="friend-balance is-negative">
+                        <p class="friend-balance-label">Dolguješ</p>
+                        <p class="friend-balance-amount">{{ group.formatted_balance }}</p>
                     </div>
 
                 {% else if group.balance_cents > 0 %}
-                    <div class="row-balance is-positive">
-                        <p class="balance-note">Prejmeš</p>
-                        <p class="amount">{{ group.formatted_balance }}</p>
+                    <div class="friend-balance is-positive">
+                        <p class="friend-balance-label">Prejmeš</p>
+                        <p class="friend-balance-amount">{{ group.formatted_balance }}</p>
                     </div>
                 {% endif %}
 

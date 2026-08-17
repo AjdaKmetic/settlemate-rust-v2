@@ -33,6 +33,10 @@
         >
             Prekliči
         </button>
+
+        {% if has_error %}
+            <p class="form-error">{{ error_message }}</p>
+        {% endif %}
     </form>
 
 </div>

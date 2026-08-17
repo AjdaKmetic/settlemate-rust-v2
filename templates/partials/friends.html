@@ -30,11 +30,6 @@
                 </div>
 
                 {% if friend.balance_cents < 0 %}
-                    <div class="friend-balance is-negative">
-                        <p class="friend-balance-label">Dolguješ</p>
-                        <p class="friend-balance-amount">{{ friend.formatted_balance }}</p>
-                    </div>
-
                     <button
                         type="button"
                         class="btn-cancel settle-button"
@@ -44,6 +39,11 @@
                     >
                         Poravnaj dolg
                     </button>
+
+                    <div class="friend-balance is-negative">
+                        <p class="friend-balance-label">Dolguješ</p>
+                        <p class="friend-balance-amount">{{ friend.formatted_balance }}</p>
+                    </div>
 
                 {% else if friend.balance_cents > 0 %}
                     <div class="friend-balance is-positive">

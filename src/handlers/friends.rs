@@ -24,7 +24,10 @@ use crate::{
 
 #[derive(Template)]
 #[template(path = "partials/friend_form.html")]
-struct FriendFormTemplate;
+struct FriendFormTemplate {
+    has_error: bool,
+    error_message: String,
+}
 
 pub struct FriendView {
     pub id: i32,
@@ -85,9 +88,12 @@ pub async fn get_friend_views(
 //            handlerji
 // ====================================
 
-// prikaz obrazca
-pub async fn friend_form() -> Response {
-    let template = FriendFormTemplate;
+// izris obrazca; ob napaki vrne 200, da ga htmx zamenja
+fn render_friend_form(error_message: &str) -> Response {
+    let template = FriendFormTemplate {
+        has_error: !error_message.is_empty(),
+        error_message: error_message.to_string(),
+    };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -102,6 +108,11 @@ pub async fn friend_form() -> Response {
                 .into_response()
         }
     }
+}
+
+// prikaz obrazca
+pub async fn friend_form() -> Response {
+    render_friend_form("")
 }
 
 pub async fn add_friend_handler(
@@ -128,7 +139,7 @@ pub async fn add_friend_handler(
     };
 
     if let Err(error_message) = form.validate() {
-        return (StatusCode::BAD_REQUEST, error_message).into_response();
+        return render_friend_form(error_message);
     }
 
     let username = form.username.trim().to_lowercase();
@@ -137,11 +148,7 @@ pub async fn add_friend_handler(
         Ok(Some(friend)) => friend,
 
         Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Uporabnik s tem uporabniškim imenom ne obstaja.",
-            )
-                .into_response();
+            return render_friend_form("Uporabnik s tem uporabniškim imenom ne obstaja.");
         }
 
         Err(error) => {
@@ -156,9 +163,16 @@ pub async fn add_friend_handler(
     };
 
     if let Err(error) = add_friend(&state.db, user.id, friend.id).await {
-        eprintln!("Napaka pri dodajanju prijatelja: {error}");
+        return match error {
+            // sporočilo iz servisa prikažemo v obrazcu
+            sea_orm::DbErr::Custom(message) => render_friend_form(&message),
 
-        return (StatusCode::BAD_REQUEST, error.to_string()).into_response();
+            other => {
+                eprintln!("Napaka pri dodajanju prijatelja: {other}");
+
+                render_friend_form("Pri dodajanju prijatelja je prišlo do napake.")
+            }
+        };
     }
 
     let friends = match get_friends(&state.db, user.id).await {

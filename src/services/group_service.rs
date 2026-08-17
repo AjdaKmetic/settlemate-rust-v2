@@ -16,11 +16,32 @@ pub async fn create_group(
     group.insert(db).await
 }
 
+// preveri, ali je uporabnik že član skupine
+pub async fn is_group_member(
+    db: &DatabaseConnection,
+    group_id: i32,
+    user_id: i32,
+) -> Result<bool, sea_orm::DbErr> {
+    let member = group_members::Entity::find()
+        .filter(group_members::Column::GroupId.eq(group_id))
+        .filter(group_members::Column::UserId.eq(user_id))
+        .one(db)
+        .await?;
+
+    Ok(member.is_some())
+}
+
 pub async fn add_member_to_group(
     db: &DatabaseConnection,
     group_id: i32,
     user_id: i32,
 ) -> Result<group_members::Model, sea_orm::DbErr> {
+    if is_group_member(db, group_id, user_id).await? {
+        return Err(sea_orm::DbErr::Custom(
+            "Ta uporabnik je že član skupine.".to_string(),
+        ));
+    }
+
     let member = group_members::ActiveModel {
         group_id: Set(group_id),
         user_id: Set(user_id),

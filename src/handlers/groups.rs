@@ -65,6 +65,8 @@ struct GroupDetailTemplate {
 #[template(path = "partials/group_member_form.html")]
 struct GroupMemberFormTemplate {
     group: groups::Model,
+    has_error: bool,
+    error_message: String,
 }
 
 #[derive(Deserialize)]
@@ -179,6 +181,29 @@ fn format_members_summary(members: &[users::Model]) -> String {
             names[2],
             names.len() - 3
         ),
+    }
+}
+
+// izris obrazca za člana; ob napaki vrne 200, da ga htmx zamenja
+fn render_group_member_form(group: groups::Model, error_message: &str) -> Response {
+    let template = GroupMemberFormTemplate {
+        group,
+        has_error: !error_message.is_empty(),
+        error_message: error_message.to_string(),
+    };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu obrazca za člana: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu obrazca je prišlo do napake.",
+            )
+                .into_response()
+        }
     }
 }
 
@@ -444,21 +469,7 @@ pub async fn group_member_form(
         }
     };
 
-    let template = GroupMemberFormTemplate { group };
-
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
-
-        Err(error) => {
-            eprintln!("Napaka pri izrisu obrazca za člana: {error}");
-
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri prikazu obrazca je prišlo do napake.",
-            )
-                .into_response()
-        }
-    }
+    render_group_member_form(group, "")
 }
 
 pub async fn add_group_member_handler(
@@ -485,44 +496,7 @@ pub async fn add_group_member_handler(
         }
     };
 
-    if let Err(error_message) = form.validate() {
-        return (StatusCode::BAD_REQUEST, error_message).into_response();
-    }
-
-    let username = form.username.trim().to_lowercase();
-
-    let member = match find_user_by_username(&state.db, &username).await {
-        Ok(Some(member)) => member,
-
-        Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Uporabnik s tem uporabniškim imenom ne obstaja.",
-            )
-                .into_response();
-        }
-
-        Err(error) => {
-            eprintln!("Napaka pri iskanju uporabnika: {error}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Pri dodajanju člana je prišlo do napake.",
-            )
-                .into_response();
-        }
-    };
-
-    if let Err(error) = add_member_to_group(&state.db, group_id, member.id).await {
-        eprintln!("Napaka pri dodajanju uporabnika v skupino: {error}");
-
-        return (
-            StatusCode::BAD_REQUEST,
-            "Uporabnika ni bilo mogoče dodati v skupino.",
-        )
-            .into_response();
-    }
-
+    // skupino potrebujemo tudi za ponovni izris obrazca ob napaki
     let group = match find_group_by_id(&state.db, group_id).await {
         Ok(Some(group)) => group,
 
@@ -540,6 +514,46 @@ pub async fn add_group_member_handler(
                 .into_response();
         }
     };
+
+    if let Err(error_message) = form.validate() {
+        return render_group_member_form(group, error_message);
+    }
+
+    let username = form.username.trim().to_lowercase();
+
+    let member = match find_user_by_username(&state.db, &username).await {
+        Ok(Some(member)) => member,
+
+        Ok(None) => {
+            return render_group_member_form(
+                group,
+                "Uporabnik s tem uporabniškim imenom ne obstaja.",
+            );
+        }
+
+        Err(error) => {
+            eprintln!("Napaka pri iskanju uporabnika: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri dodajanju člana je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    if let Err(error) = add_member_to_group(&state.db, group_id, member.id).await {
+        return match error {
+            // sporočilo iz servisa prikažemo v obrazcu
+            sea_orm::DbErr::Custom(message) => render_group_member_form(group, &message),
+
+            other => {
+                eprintln!("Napaka pri dodajanju uporabnika v skupino: {other}");
+
+                render_group_member_form(group, "Uporabnika ni bilo mogoče dodati v skupino.")
+            }
+        };
+    }
 
     let members = match get_group_members(&state.db, group_id).await {
         Ok(members) => members,

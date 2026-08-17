@@ -89,28 +89,28 @@
                     </p>
                 </div>
 
-                {% if member.balance_cents > 0 %}
-                    <div class="friend-balance balance-positive">
-                        <span>Prejmeš</span>
-                        <strong>{{ member.formatted_balance }}</strong>
+                {% if member.balance_cents < 0 %}
+                    {% if !member.is_current_user %}
+                        <button
+                            type="button"
+                            class="btn-cancel settle-button"
+                            hx-post="/groups/{{ group.id }}/members/{{ member.id }}/settle"
+                            hx-target="#groups-panel"
+                            hx-swap="outerHTML"
+                        >
+                            Poravnaj dolg
+                        </button>
+                    {% endif %}
+
+                    <div class="friend-balance is-negative">
+                        <p class="friend-balance-label">Dolguješ</p>
+                        <p class="friend-balance-amount">{{ member.formatted_balance }}</p>
                     </div>
 
-                {% else if member.balance_cents < 0 %}
-                    <div class="friend-balance balance-negative">
-                        <span>Dolguješ</span>
-                        <strong>{{ member.formatted_balance }}</strong>
-
-                        {% if !member.is_current_user %}
-                            <button
-                                type="button"
-                                class="btn-settle"
-                                hx-post="/groups/{{ group.id }}/members/{{ member.id }}/settle"
-                                hx-target="#groups-panel"
-                                hx-swap="outerHTML"
-                            >
-                                Poravnaj dolg
-                            </button>
-                        {% endif %}
+                {% else if member.balance_cents > 0 %}
+                    <div class="friend-balance is-positive">
+                        <p class="friend-balance-label">Prejmeš</p>
+                        <p class="friend-balance-amount">{{ member.formatted_balance }}</p>
                     </div>
                 {% endif %}
 
