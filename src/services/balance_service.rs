@@ -57,7 +57,11 @@ pub async fn get_balance(db: &DatabaseConnection, user_id: i32) -> Result<i64, s
 }
 
 // izračun stanja med dvema uporabnikoma
-pub async fn get_balance_with_user(db: &DatabaseConnection, user_id: i32, other_user_id: i32) -> Result<i64, sea_orm::DbErr> {
+pub async fn get_balance_with_user(
+    db: &DatabaseConnection,
+    user_id: i32,
+    other_user_id: i32,
+) -> Result<i64, sea_orm::DbErr> {
     // koliko je drugi uporabnik dolžan prvemu
     let owed_to_user: i64 = expense_splits::Entity::find()
         .inner_join(expenses::Entity)
@@ -107,7 +111,6 @@ pub async fn get_balance_with_user(db: &DatabaseConnection, user_id: i32, other_
         received_cents,
     ))
 }
-
 
 // ====================================
 //               TESTI

@@ -3,10 +3,10 @@
 use askama::Template;
 
 use axum::{
-    extract::State,
+    Form,
+    extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
-    Form,
 };
 use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
@@ -14,13 +14,10 @@ use serde::Deserialize;
 use crate::{
     app::state::AppState,
     entities::users,
-    handlers::auth::get_current_user,
+    handlers::{auth::get_current_user, confirm::ConfirmModalTemplate},
     services::{
         balance_service::get_balance_with_user,
-        friend_service::{
-            add_friend,
-            get_friends,
-        },
+        friend_service::{add_friend, get_friends, remove_friend},
         user_service::find_user_by_username,
     },
 };
@@ -58,7 +55,11 @@ impl AddFriendForm {
     }
 }
 
-pub async fn get_friend_views(db: &sea_orm::DatabaseConnection, user_id: i32, friends: Vec<users::Model>) -> Result<Vec<FriendView>, sea_orm::DbErr> {
+pub async fn get_friend_views(
+    db: &sea_orm::DatabaseConnection,
+    user_id: i32,
+    friends: Vec<users::Model>,
+) -> Result<Vec<FriendView>, sea_orm::DbErr> {
     let mut friend_views = Vec::new();
 
     for friend in friends {
@@ -93,7 +94,7 @@ pub async fn friend_form() -> Response {
 
         Err(error) => {
             eprintln!("Napaka pri izrisu obrazca za prijatelja: {error}");
-            
+
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Pri prikazu obrazca je prišlo do napake.",
@@ -103,7 +104,11 @@ pub async fn friend_form() -> Response {
     }
 }
 
-pub async fn add_friend_handler(State(state): State<AppState>, jar: CookieJar, Form(form): Form<AddFriendForm>) -> Response {
+pub async fn add_friend_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<AddFriendForm>,
+) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
 
@@ -123,11 +128,7 @@ pub async fn add_friend_handler(State(state): State<AppState>, jar: CookieJar, F
     };
 
     if let Err(error_message) = form.validate() {
-        return (
-            StatusCode::BAD_REQUEST,
-            error_message,
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, error_message).into_response();
     }
 
     let username = form.username.trim().to_lowercase();
@@ -157,9 +158,154 @@ pub async fn add_friend_handler(State(state): State<AppState>, jar: CookieJar, F
     if let Err(error) = add_friend(&state.db, user.id, friend.id).await {
         eprintln!("Napaka pri dodajanju prijatelja: {error}");
 
+        return (StatusCode::BAD_REQUEST, error.to_string()).into_response();
+    }
+
+    let friends = match get_friends(&state.db, user.id).await {
+        Ok(friends) => friends,
+
+        Err(error) => {
+            eprintln!("Napaka pri pridobivanju prijateljev: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu prijateljev je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let friends = match get_friend_views(&state.db, user.id, friends).await {
+        Ok(friends) => friends,
+
+        Err(error) => {
+            eprintln!("Napaka pri pripravi podatkov o prijateljih: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu prijateljev je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let template = FriendsTemplate { friends };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu prijateljev: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu prijateljev je prišlo do napake.",
+            )
+                .into_response()
+        }
+    }
+}
+
+// prikaz potrditve za odstranitev prijatelja
+pub async fn friend_delete_form(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(friend_id): Path<i32>,
+) -> Response {
+    match get_current_user(&state, &jar).await {
+        Ok(Some(_)) => {}
+
+        Ok(None) => {
+            return Redirect::to("/login").into_response();
+        }
+
+        Err(error) => {
+            eprintln!("Napaka pri preverjanju prijavljenega uporabnika: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu obrazca je prišlo do napake.",
+            )
+                .into_response();
+        }
+    }
+
+    let template = ConfirmModalTemplate {
+        title: "Odstrani prijatelja".to_string(),
+        message: "Ali res želiš odstraniti tega prijatelja?".to_string(),
+        cancel_label: "Prekliči".to_string(),
+        confirm_label: "Odstrani".to_string(),
+        confirm_url: format!("/friends/{friend_id}/delete"),
+        confirm_target: "#friends-panel".to_string(),
+    };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu potrditve za odstranitev prijatelja: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu obrazca je prišlo do napake.",
+            )
+                .into_response()
+        }
+    }
+}
+
+// odstranitev prijatelja
+pub async fn remove_friend_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(friend_id): Path<i32>,
+) -> Response {
+    let user = match get_current_user(&state, &jar).await {
+        Ok(Some(user)) => user,
+
+        Ok(None) => {
+            return Redirect::to("/login").into_response();
+        }
+
+        Err(error) => {
+            eprintln!("Napaka pri preverjanju prijavljenega uporabnika: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri odstranjevanju prijatelja je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let balance = match get_balance_with_user(&state.db, user.id, friend_id).await {
+        Ok(balance) => balance,
+
+        Err(error) => {
+            eprintln!("Napaka pri izračunu stanja med prijateljema: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri odstranjevanju prijatelja je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    if balance != 0 {
         return (
             StatusCode::BAD_REQUEST,
-            error.to_string(),
+            "Pred odstranitvijo prijatelja morajo biti dolgovi poravnani.",
+        )
+            .into_response();
+    }
+
+    if let Err(error) = remove_friend(&state.db, user.id, friend_id).await {
+        eprintln!("Napaka pri odstranjevanju prijatelja: {error}");
+
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Pri odstranjevanju prijatelja je prišlo do napake.",
         )
             .into_response();
     }
@@ -192,12 +338,14 @@ pub async fn add_friend_handler(State(state): State<AppState>, jar: CookieJar, F
         }
     };
 
-    let template = FriendsTemplate {
-        friends,
-    };
+    let template = FriendsTemplate { friends };
 
     match template.render() {
-        Ok(html) => Html(html).into_response(),
+        Ok(html) => {
+            let response = format!(r#"{html}<div id="modal-root" hx-swap-oob="innerHTML"></div>"#);
+
+            Html(response).into_response()
+        }
 
         Err(error) => {
             eprintln!("Napaka pri izrisu prijateljev: {error}");

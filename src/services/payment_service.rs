@@ -1,22 +1,17 @@
-use sea_orm::{
-    ActiveModelTrait,
-    DatabaseConnection,
-    Set,
-};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
 
-use crate::{
-    entities::payments,
-    services::balance_service::get_balance_with_user,
-};
+use crate::{entities::payments, services::balance_service::get_balance_with_user};
 
-pub async fn settle_debt(db: &DatabaseConnection, user_id: i32, other_user_id: i32) -> Result<payments::Model, sea_orm::DbErr> {
+pub async fn settle_debt(
+    db: &DatabaseConnection,
+    user_id: i32,
+    other_user_id: i32,
+) -> Result<payments::Model, sea_orm::DbErr> {
     let balance = get_balance_with_user(db, user_id, other_user_id).await?;
 
     // "varovalka" za backend
     if balance >= 0 {
-        return Err(sea_orm::DbErr::Custom(
-            "Nimaš dolga.".to_string(),
-        ));
+        return Err(sea_orm::DbErr::Custom("Nimaš dolga.".to_string()));
     }
 
     let payment = payments::ActiveModel {

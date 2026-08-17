@@ -12,40 +12,16 @@ use sea_orm::Database;
 use app::state::AppState;
 use handlers::{
     account::{account_page, change_password, update_name},
-    auth::{
-        login_form,
-        login_user,
-        logout_user,
-        register_form,
-        register_user,
-    },
-    friends::{
-        add_friend_handler,
-        friend_form,
-    },
+    auth::{login_form, login_user, logout_user, register_form, register_user},
+    expenses::{close_expense_form, create_expense_handler, expense_form},
+    friends::{add_friend_handler, friend_delete_form, friend_form, remove_friend_handler},
     groups::{
-        add_group_member_handler,
-        create_group_handler,
-        delete_group_handler,
-        group_delete_form,
-        group_detail,
-        group_form,
-        group_leave_form,
-        group_member_form,
-        leave_group_handler,
-    },
-    expenses::{
-        close_expense_form,
-        create_expense_handler,
-        expense_form,
+        add_group_member_handler, create_group_handler, delete_group_handler, group_delete_form,
+        group_detail, group_form, group_leave_form, group_member_form, leave_group_handler,
     },
     index::index,
     payments::settle_debt_handler,
-    tabs::{
-        activity_tab,
-        friends_tab,
-        groups_tab,
-    },
+    tabs::{activity_tab, friends_tab, groups_tab},
 };
 
 use tower_http::services::ServeDir;
@@ -68,6 +44,8 @@ async fn main() {
         .route("/tabs/activity", get(activity_tab))
         .route("/friends/form", get(friend_form))
         .route("/friends", post(add_friend_handler))
+        .route("/friends/{friend_id}/delete/form", get(friend_delete_form))
+        .route("/friends/{friend_id}/delete", post(remove_friend_handler))
         .route("/groups/form", get(group_form))
         .route("/groups", post(create_group_handler))
         .route("/groups/{id}", get(group_detail))
@@ -83,7 +61,10 @@ async fn main() {
         .route("/expenses/form", get(expense_form))
         .route("/expenses/close", get(close_expense_form))
         .route("/expenses", post(create_expense_handler))
-        .route("/payments/settle/{other_user_id}", post(settle_debt_handler))
+        .route(
+            "/payments/settle/{other_user_id}",
+            post(settle_debt_handler),
+        )
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 

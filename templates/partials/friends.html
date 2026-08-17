@@ -53,6 +53,20 @@
                         <p class="amount">{{ friend.formatted_balance }}</p>
                     </div>
                 {% endif %}
+
+                <details class="friend-menu">
+                    <summary class="friend-menu-button">⋮</summary>
+
+                    <button
+                        type="button"
+                        class="account-menu-item"
+                        hx-get="/friends/{{ friend.id }}/delete/form"
+                        hx-target="#modal-root"
+                        hx-swap="innerHTML"
+                    >
+                        Odstrani prijatelja
+                    </button>
+                </details>
             </div>
         {% endfor %}
     {% endif %}

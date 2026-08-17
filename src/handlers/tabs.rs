@@ -12,20 +12,15 @@ use std::collections::HashMap;
 
 use crate::{
     app::state::AppState,
-    entities::{
-        groups,
-        users,
-    },
+    entities::{groups, users},
     handlers::{
         auth::get_current_user,
         expenses::{ActivityItem, build_activities},
         friends::{FriendView, get_friend_views},
     },
     services::{
-        expense_service::get_expenses_for_user,
-        friend_service::get_friends,
-        group_service::get_groups_for_user,
-        user_service::find_users_by_ids,
+        expense_service::get_expenses_for_user, friend_service::get_friends,
+        group_service::get_groups_for_user, user_service::find_users_by_ids,
     },
 };
 
@@ -61,7 +56,7 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
                 .into_response();
         }
     };
-    
+
     let friends = match get_friends(&state.db, user.id).await {
         Ok(friends) => friends,
 
@@ -93,7 +88,7 @@ pub async fn friends_tab(State(state): State<AppState>, jar: CookieJar) -> Respo
     let template = TabShellTemplate {
         active_tab: "friends",
         friends,
-        groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
+        groups: Vec::new(),     // Askama zahteva polje groups v vseh vejah
         activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
     };
 
@@ -229,7 +224,7 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
     let template = TabShellTemplate {
         active_tab: "activity",
         friends: Vec::new(), // Askama zahteva polje friends v vseh vejah
-        groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
+        groups: Vec::new(),  // Askama zahteva polje groups v vseh vejah
         activities: build_activities(expenses, user.id, &payer_names),
     };
 

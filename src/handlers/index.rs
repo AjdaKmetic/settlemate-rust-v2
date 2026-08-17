@@ -16,10 +16,7 @@ use crate::{
         expenses::ActivityItem,
         friends::{FriendView, get_friend_views},
     },
-    services::{
-        balance_service::get_balance,
-        friend_service::get_friends,
-    },
+    services::{balance_service::get_balance, friend_service::get_friends},
 };
 
 // Askama
@@ -38,23 +35,16 @@ struct IndexTemplate {
 
 impl IndexTemplate {
     fn new(username: String, balance_cents: i64, friends: Vec<FriendView>) -> Self {
-        let (balance_state_class, balance_label) =
-            if balance_cents > 0 {
-                (
-                    "balance-positive",
-                    "Prejmeš",
-                )
-            } else if balance_cents < 0 {
-                (
-                    "balance-negative",
-                    "Dolguješ",
-                )
-            } else {
-                (
-                    "balance-neutral",
-                    "Vse štima", // Brez dolgov
-                )
-            };
+        let (balance_state_class, balance_label) = if balance_cents > 0 {
+            ("balance-positive", "Prejmeš")
+        } else if balance_cents < 0 {
+            ("balance-negative", "Dolguješ")
+        } else {
+            (
+                "balance-neutral",
+                "Vse štima", // Brez dolgov
+            )
+        };
 
         let absolute = balance_cents.unsigned_abs();
         let euros = absolute / 100;
@@ -166,11 +156,7 @@ mod tests {
 
     #[test]
     fn pozitivno_stanje_je_pravilno_prikazano() {
-        let template = IndexTemplate::new(
-            "ajda".to_string(),
-            12345,
-            Vec::new(),
-        );
+        let template = IndexTemplate::new("ajda".to_string(), 12345, Vec::new());
 
         assert_eq!(template.balance_state_class, "balance-positive");
         assert_eq!(template.balance_label, "Prejmeš");
@@ -179,11 +165,7 @@ mod tests {
 
     #[test]
     fn negativno_stanje_je_pravilno_prikazano() {
-        let template = IndexTemplate::new(
-            "ajda".to_string(),
-            -123,
-            Vec::new(),
-        );
+        let template = IndexTemplate::new("ajda".to_string(), -123, Vec::new());
         assert_eq!(template.balance_state_class, "balance-negative");
         assert_eq!(template.balance_label, "Dolguješ");
         assert_eq!(template.formatted_balance, "1,23 €");
@@ -191,11 +173,7 @@ mod tests {
 
     #[test]
     fn nicelno_stanje_je_pravilno_prikazano() {
-        let template = IndexTemplate::new(
-            "ajda".to_string(),
-            0,
-            Vec::new(),
-        );
+        let template = IndexTemplate::new("ajda".to_string(), 0, Vec::new());
         assert_eq!(template.balance_state_class, "balance-neutral");
         assert_eq!(template.balance_label, "Vse štima");
         assert_eq!(template.formatted_balance, "0,00 €");

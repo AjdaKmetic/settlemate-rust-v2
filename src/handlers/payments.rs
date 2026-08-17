@@ -13,9 +13,7 @@ use crate::{
         friends::{FriendView, get_friend_views},
     },
     services::{
-        balance_service::get_balance,
-        friend_service::get_friends,
-        payment_service::settle_debt,
+        balance_service::get_balance, friend_service::get_friends, payment_service::settle_debt,
     },
 };
 
@@ -28,7 +26,11 @@ struct PaymentResultTemplate {
     formatted_balance: String,
 }
 
-pub async fn settle_debt_handler(State(state): State<AppState>, jar: CookieJar, Path(other_user_id): Path<i32>) -> Response {
+pub async fn settle_debt_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(other_user_id): Path<i32>,
+) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
 
@@ -50,11 +52,7 @@ pub async fn settle_debt_handler(State(state): State<AppState>, jar: CookieJar, 
     if let Err(error) = settle_debt(&state.db, user.id, other_user_id).await {
         eprintln!("Napaka pri poravnavi dolga: {error}");
 
-        return (
-            StatusCode::BAD_REQUEST,
-            "Dolga ni bilo mogoče poravnati.",
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, "Dolga ni bilo mogoče poravnati.").into_response();
     }
 
     let friends = match get_friends(&state.db, user.id).await {

@@ -1,22 +1,15 @@
 use sea_orm::{
-    ActiveModelTrait,
-    ColumnTrait,
-    DatabaseConnection,
-    EntityTrait,
-    JoinType,
-    QueryFilter,
-    QuerySelect,
-    RelationTrait,
-    Set,
-    TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
+    QuerySelect, RelationTrait, Set, TransactionTrait,
 };
 
-use crate::entities::{
-    friendships,
-    users,
-};
+use crate::entities::{friendships, users};
 
-pub async fn are_friends(db: &DatabaseConnection, user_id: i32, friend_id: i32) -> Result<bool, sea_orm::DbErr> {
+pub async fn are_friends(
+    db: &DatabaseConnection,
+    user_id: i32,
+    friend_id: i32,
+) -> Result<bool, sea_orm::DbErr> {
     let friendship = friendships::Entity::find()
         .filter(friendships::Column::UserId.eq(user_id))
         .filter(friendships::Column::FriendId.eq(friend_id))
@@ -26,7 +19,11 @@ pub async fn are_friends(db: &DatabaseConnection, user_id: i32, friend_id: i32) 
     Ok(friendship.is_some()) // če je Some vrne true, sicer false
 }
 
-pub async fn add_friend(db: &DatabaseConnection, user_id: i32, friend_id: i32) -> Result<(), sea_orm::DbErr> {
+pub async fn add_friend(
+    db: &DatabaseConnection,
+    user_id: i32,
+    friend_id: i32,
+) -> Result<(), sea_orm::DbErr> {
     if user_id == friend_id {
         return Err(sea_orm::DbErr::Custom(
             "Ne moreš dodati samega sebe za prijatelja.".to_string(),
@@ -62,7 +59,10 @@ pub async fn add_friend(db: &DatabaseConnection, user_id: i32, friend_id: i32) -
     Ok(())
 }
 
-pub async fn get_friends(db: &DatabaseConnection, user_id: i32) -> Result<Vec<users::Model>, sea_orm::DbErr> {
+pub async fn get_friends(
+    db: &DatabaseConnection,
+    user_id: i32,
+) -> Result<Vec<users::Model>, sea_orm::DbErr> {
     users::Entity::find()
         .join(
             JoinType::InnerJoin,
@@ -73,6 +73,27 @@ pub async fn get_friends(db: &DatabaseConnection, user_id: i32) -> Result<Vec<us
         .await
 }
 
-/*
-remove_friend()
-*/
+// odstranitev prijatelja
+pub async fn remove_friend(
+    db: &DatabaseConnection,
+    user_id: i32,
+    friend_id: i32,
+) -> Result<(), sea_orm::DbErr> {
+    let transaction = db.begin().await?;
+
+    friendships::Entity::delete_many()
+        .filter(friendships::Column::UserId.eq(user_id))
+        .filter(friendships::Column::FriendId.eq(friend_id))
+        .exec(&transaction)
+        .await?;
+
+    friendships::Entity::delete_many()
+        .filter(friendships::Column::UserId.eq(friend_id))
+        .filter(friendships::Column::FriendId.eq(user_id))
+        .exec(&transaction)
+        .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
+}

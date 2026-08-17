@@ -3,10 +3,10 @@
 use askama::Template;
 
 use axum::{
+    Form,
     extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
-    Form,
 };
 use axum_extra::extract::cookie::CookieJar;
 use sea_orm::DatabaseConnection;
@@ -15,16 +15,11 @@ use serde::Deserialize;
 use crate::{
     app::state::AppState,
     entities::{groups, users},
-    handlers::auth::get_current_user,
+    handlers::{auth::get_current_user, confirm::ConfirmModalTemplate},
     services::{
         group_service::{
-            add_member_to_group,
-            create_group,
-            delete_group,
-            find_group_by_id,
-            get_group_members,
-            get_groups_for_user,
-            remove_member_from_group,
+            add_member_to_group, create_group, delete_group, find_group_by_id, get_group_members,
+            get_groups_for_user, remove_member_from_group,
         },
         user_service::find_user_by_username,
     },
@@ -51,18 +46,6 @@ struct GroupDetailTemplate {
 #[template(path = "partials/group_member_form.html")]
 struct GroupMemberFormTemplate {
     group: groups::Model,
-}
-
-// splošno potrditveno okno, uporabno za vse potrditve
-#[derive(Template)]
-#[template(path = "partials/confirm_modal.html")]
-struct ConfirmModalTemplate {
-    title: String,
-    message: String,
-    cancel_label: String,
-    confirm_label: String,
-    confirm_url: String,
-    confirm_target: String,
 }
 
 #[derive(Deserialize)]
@@ -96,7 +79,11 @@ impl AddMemberForm {
 }
 
 // preveri, ali je uporabnik član skupine
-async fn is_member(db: &DatabaseConnection, group_id: i32, user_id: i32) -> Result<bool, sea_orm::DbErr> {
+async fn is_member(
+    db: &DatabaseConnection,
+    group_id: i32,
+    user_id: i32,
+) -> Result<bool, sea_orm::DbErr> {
     let members = get_group_members(db, group_id).await?;
 
     Ok(members.iter().any(|member| member.id == user_id))
@@ -125,7 +112,11 @@ pub async fn group_form() -> Response {
     }
 }
 
-pub async fn create_group_handler(State(state): State<AppState>, jar: CookieJar, Form(form): Form<NewGroupForm>) -> Response {
+pub async fn create_group_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<NewGroupForm>,
+) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
 
@@ -145,11 +136,7 @@ pub async fn create_group_handler(State(state): State<AppState>, jar: CookieJar,
     };
 
     if let Err(error_message) = form.validate() {
-        return (
-            StatusCode::BAD_REQUEST,
-            error_message,
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, error_message).into_response();
     }
 
     let name = form.name.trim();
@@ -193,9 +180,7 @@ pub async fn create_group_handler(State(state): State<AppState>, jar: CookieJar,
         }
     };
 
-    let template = GroupsTemplate {
-        groups,
-    };
+    let template = GroupsTemplate { groups };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -213,7 +198,11 @@ pub async fn create_group_handler(State(state): State<AppState>, jar: CookieJar,
 }
 
 // prikaz skupine in njenih članov
-pub async fn group_detail(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>) -> Response {
+pub async fn group_detail(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+) -> Response {
     match get_current_user(&state, &jar).await {
         Ok(Some(_)) => {}
 
@@ -236,11 +225,7 @@ pub async fn group_detail(State(state): State<AppState>, jar: CookieJar, Path(gr
         Ok(Some(group)) => group,
 
         Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Skupina ne obstaja.",
-            )
-                .into_response();
+            return (StatusCode::NOT_FOUND, "Skupina ne obstaja.").into_response();
         }
 
         Err(error) => {
@@ -268,10 +253,7 @@ pub async fn group_detail(State(state): State<AppState>, jar: CookieJar, Path(gr
         }
     };
 
-    let template = GroupDetailTemplate {
-        group,
-        members,
-    };
+    let template = GroupDetailTemplate { group, members };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -289,7 +271,11 @@ pub async fn group_detail(State(state): State<AppState>, jar: CookieJar, Path(gr
 }
 
 // prikaz obrazca za dodajanje člana
-pub async fn group_member_form(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>) -> Response {
+pub async fn group_member_form(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+) -> Response {
     match get_current_user(&state, &jar).await {
         Ok(Some(_)) => {}
 
@@ -312,11 +298,7 @@ pub async fn group_member_form(State(state): State<AppState>, jar: CookieJar, Pa
         Ok(Some(group)) => group,
 
         Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Skupina ne obstaja.",
-            )
-                .into_response();
+            return (StatusCode::NOT_FOUND, "Skupina ne obstaja.").into_response();
         }
 
         Err(error) => {
@@ -330,9 +312,7 @@ pub async fn group_member_form(State(state): State<AppState>, jar: CookieJar, Pa
         }
     };
 
-    let template = GroupMemberFormTemplate {
-        group,
-    };
+    let template = GroupMemberFormTemplate { group };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -349,7 +329,12 @@ pub async fn group_member_form(State(state): State<AppState>, jar: CookieJar, Pa
     }
 }
 
-pub async fn add_group_member_handler(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>, Form(form): Form<AddMemberForm>) -> Response {
+pub async fn add_group_member_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+    Form(form): Form<AddMemberForm>,
+) -> Response {
     match get_current_user(&state, &jar).await {
         Ok(Some(_)) => {}
 
@@ -369,11 +354,7 @@ pub async fn add_group_member_handler(State(state): State<AppState>, jar: Cookie
     }
 
     if let Err(error_message) = form.validate() {
-        return (
-            StatusCode::BAD_REQUEST,
-            error_message,
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, error_message).into_response();
     }
 
     let username = form.username.trim().to_lowercase();
@@ -414,11 +395,7 @@ pub async fn add_group_member_handler(State(state): State<AppState>, jar: Cookie
         Ok(Some(group)) => group,
 
         Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Skupina ne obstaja.",
-            )
-                .into_response();
+            return (StatusCode::NOT_FOUND, "Skupina ne obstaja.").into_response();
         }
 
         Err(error) => {
@@ -446,10 +423,7 @@ pub async fn add_group_member_handler(State(state): State<AppState>, jar: Cookie
         }
     };
 
-    let template = GroupDetailTemplate {
-        group,
-        members,
-    };
+    let template = GroupDetailTemplate { group, members };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -467,7 +441,11 @@ pub async fn add_group_member_handler(State(state): State<AppState>, jar: Cookie
 }
 
 // prikaz potrditve za zapustitev skupine
-pub async fn group_leave_form(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>) -> Response {
+pub async fn group_leave_form(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+) -> Response {
     match get_current_user(&state, &jar).await {
         Ok(Some(_)) => {}
 
@@ -490,11 +468,7 @@ pub async fn group_leave_form(State(state): State<AppState>, jar: CookieJar, Pat
         Ok(Some(group)) => group,
 
         Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Skupina ne obstaja.",
-            )
-                .into_response();
+            return (StatusCode::NOT_FOUND, "Skupina ne obstaja.").into_response();
         }
 
         Err(error) => {
@@ -555,7 +529,11 @@ pub async fn group_leave_form(State(state): State<AppState>, jar: CookieJar, Pat
 }
 
 // prikaz potrditve za brisanje skupine
-pub async fn group_delete_form(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>) -> Response {
+pub async fn group_delete_form(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+) -> Response {
     match get_current_user(&state, &jar).await {
         Ok(Some(_)) => {}
 
@@ -578,11 +556,7 @@ pub async fn group_delete_form(State(state): State<AppState>, jar: CookieJar, Pa
         Ok(Some(group)) => group,
 
         Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                "Skupina ne obstaja.",
-            )
-                .into_response();
+            return (StatusCode::NOT_FOUND, "Skupina ne obstaja.").into_response();
         }
 
         Err(error) => {
@@ -621,7 +595,11 @@ pub async fn group_delete_form(State(state): State<AppState>, jar: CookieJar, Pa
 }
 
 // uporabnik zapusti skupino
-pub async fn leave_group_handler(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>) -> Response {
+pub async fn leave_group_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
 
@@ -644,11 +622,7 @@ pub async fn leave_group_handler(State(state): State<AppState>, jar: CookieJar, 
         Ok(true) => {}
 
         Ok(false) => {
-            return (
-                StatusCode::FORBIDDEN,
-                "Nimaš dostopa do te skupine.",
-            )
-                .into_response();
+            return (StatusCode::FORBIDDEN, "Nimaš dostopa do te skupine.").into_response();
         }
 
         Err(error) => {
@@ -715,9 +689,7 @@ pub async fn leave_group_handler(State(state): State<AppState>, jar: CookieJar, 
         }
     };
 
-    let template = GroupsTemplate {
-        groups,
-    };
+    let template = GroupsTemplate { groups };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -735,7 +707,11 @@ pub async fn leave_group_handler(State(state): State<AppState>, jar: CookieJar, 
 }
 
 // brisanje celotne skupine
-pub async fn delete_group_handler(State(state): State<AppState>, jar: CookieJar, Path(group_id): Path<i32>) -> Response {
+pub async fn delete_group_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(group_id): Path<i32>,
+) -> Response {
     let user = match get_current_user(&state, &jar).await {
         Ok(Some(user)) => user,
 
@@ -758,11 +734,7 @@ pub async fn delete_group_handler(State(state): State<AppState>, jar: CookieJar,
         Ok(true) => {}
 
         Ok(false) => {
-            return (
-                StatusCode::FORBIDDEN,
-                "Nimaš dostopa do te skupine.",
-            )
-                .into_response();
+            return (StatusCode::FORBIDDEN, "Nimaš dostopa do te skupine.").into_response();
         }
 
         Err(error) => {
@@ -800,9 +772,7 @@ pub async fn delete_group_handler(State(state): State<AppState>, jar: CookieJar,
         }
     };
 
-    let template = GroupsTemplate {
-        groups,
-    };
+    let template = GroupsTemplate { groups };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
