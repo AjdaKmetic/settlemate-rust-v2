@@ -16,8 +16,10 @@ use crate::{
     handlers::{
         auth::get_current_user,
         groups::ConfirmModalTemplate,
+        index::balance_view,
     },
     services::{
+        balance_service::get_balance,
         expense_service::{
             create_equal_expense,
             delete_expense,
@@ -62,6 +64,16 @@ struct ExpenseDescriptionFormTemplate {
 #[template(path = "partials/activity.html")]
 struct ActivityPanelTemplate {
     activities: Vec<ActivityItem>,
+}
+
+// kartica stanja za osvežitev izven glavne zamenjave
+#[derive(Template)]
+#[template(path = "partials/balance_card.html")]
+struct BalanceCardTemplate {
+    balance_state_class: &'static str,
+    balance_label: &'static str,
+    formatted_balance: String,
+    oob: bool,
 }
 
 pub struct ActivityItem {
@@ -643,15 +655,53 @@ pub async fn delete_expense_handler(State(state): State<AppState>, jar: CookieJa
         activities: build_activities(expenses, user.id, &payer_names),
     };
 
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
+    let activity_html = match template.render() {
+        Ok(html) => html,
 
         Err(error) => {
             eprintln!("Napaka pri izrisu aktivnosti: {error}");
 
-            (
+            return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Pri prikazu aktivnosti je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    // po brisanju osvežimo še kartico skupnega stanja
+    let balance_cents = match get_balance(&state.db, user.id).await {
+        Ok(balance) => balance,
+
+        Err(error) => {
+            eprintln!("Napaka pri izračunu stanja uporabnika: {error}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri izračunu stanja uporabnika je prišlo do napake.",
+            )
+                .into_response();
+        }
+    };
+
+    let (balance_state_class, balance_label, formatted_balance) = balance_view(balance_cents);
+
+    let balance_template = BalanceCardTemplate {
+        balance_state_class,
+        balance_label,
+        formatted_balance,
+        oob: true, // kartico zamenjamo izven glavnega cilja
+    };
+
+    match balance_template.render() {
+        Ok(balance_html) => Html(format!("{activity_html}{balance_html}")).into_response(),
+
+        Err(error) => {
+            eprintln!("Napaka pri izrisu stanja uporabnika: {error}");
+
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Pri prikazu stanja uporabnika je prišlo do napake.",
             )
                 .into_response()
         }
