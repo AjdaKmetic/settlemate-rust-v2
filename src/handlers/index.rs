@@ -28,9 +28,9 @@ struct IndexTemplate {
     balance_label: &'static str,
     formatted_balance: String,
     oob: bool,
+    active_tab: &'static str,
     friends: Vec<FriendView>,
     groups: Vec<GroupView>,
-    active_tab: &'static str,
     activities: Vec<ActivityItem>,
 }
 
@@ -66,9 +66,9 @@ impl IndexTemplate {
             balance_label,
             formatted_balance,
             oob: false, // na začetni strani se kartica izriše na svojem mestu
+            active_tab: "friends",
             friends,
             groups: Vec::new(), // Askama zahteva polje groups v vseh vejah
-            active_tab: "friends",
             activities: Vec::new(), // Askama zahteva polje activities v vseh vejah
         }
     }

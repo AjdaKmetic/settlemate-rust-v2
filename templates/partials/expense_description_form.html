@@ -1,4 +1,4 @@
-<div id="activity-panel" class="tab-panel">
+<div id="{{ panel_id }}" class="tab-panel">
 
     <div class="section-header">
         <h2>Uredi opis</h2>
@@ -6,8 +6,8 @@
 
     <form
         class="inline-form"
-        hx-post="/expenses/{{ expense.id }}/description"
-        hx-target="#activity-panel"
+        hx-post="/expenses/{{ expense.id }}/description?panel_id={{ panel_id }}&back_url={{ back_url }}&back_target={{ back_target }}&back_swap={{ back_swap }}"
+        hx-target="#{{ panel_id }}"
         hx-swap="outerHTML"
     >
         <input
@@ -27,9 +27,9 @@
         <button
             type="button"
             class="btn-cancel"
-            hx-get="/expenses/{{ expense.id }}"
-            hx-target="#activity-panel"
-            hx-swap="outerHTML"
+            hx-get="{{ back_url }}"
+            hx-target="{{ back_target }}"
+            hx-swap="{{ back_swap }}"
         >
             Prekliči
         </button>

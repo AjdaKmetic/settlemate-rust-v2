@@ -12,7 +12,6 @@ use std::collections::HashMap;
 
 use crate::{
     app::state::AppState,
-    entities::users,
     handlers::{
         auth::get_current_user,
         expenses::{ActivityItem, build_activities},
@@ -212,10 +211,14 @@ pub async fn activity_tab(State(state): State<AppState>, jar: CookieJar) -> Resp
         }
     };
 
-    // imena plačnikov pridobimo s poizvedbo
-    let mut payer_ids: Vec<i32> = expenses.iter().map(|expense| expense.paid_by).collect();
-    payer_ids.sort();
-    payer_ids.dedup();
+    // pridobivanje imen plačnikov
+    let mut payer_ids: Vec<i32> = expenses
+        .iter()
+        .map(|expense| expense.paid_by)
+        .collect(); // zbere v vektor
+    
+    payer_ids.sort(); // sort vrne unit
+    payer_ids.dedup(); // odstrani zaporedne podvojene vrednosti
 
     let payers = match find_users_by_ids(&state.db, payer_ids).await {
         Ok(payers) => payers,

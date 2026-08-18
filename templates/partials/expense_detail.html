@@ -18,8 +18,8 @@
                     <button
                         type="button"
                         class="account-menu-item"
-                        hx-get="/expenses/{{ expense.id }}/description/form"
-                        hx-target="#activity-panel"
+                        hx-get="/expenses/{{ expense.id }}/description/form?panel_id={{ panel_id }}&back_url={{ back_url }}&back_target={{ back_target }}&back_swap={{ back_swap }}"
+                        hx-target="#{{ panel_id }}"
                         hx-swap="outerHTML"
                     >
                         Uredi opis

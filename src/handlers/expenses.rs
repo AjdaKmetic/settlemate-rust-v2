@@ -63,12 +63,23 @@ struct ExpenseDetailTemplate {
 #[template(path = "partials/expense_description_form.html")]
 struct ExpenseDescriptionFormTemplate {
     expense: expenses::Model,
+    panel_id: String,
+    back_url: String,
+    back_target: String,
+    back_swap: String,
 }
 
 #[derive(Template)]
 #[template(path = "partials/activity.html")]
 struct ActivityPanelTemplate {
     activities: Vec<ActivityItem>,
+}
+
+pub struct ActivityItem {
+    pub id: i32,
+    pub description: String,
+    pub formatted_amount: String,
+    pub payer_label: String,
 }
 
 // kartica stanja za osvežitev izven glavne zamenjave
@@ -79,13 +90,6 @@ struct BalanceCardTemplate {
     balance_label: &'static str,
     formatted_balance: String,
     oob: bool,
-}
-
-pub struct ActivityItem {
-    pub id: i32,
-    pub description: String,
-    pub formatted_amount: String,
-    pub payer_label: String,
 }
 
 fn format_amount(amount_cents: i64) -> String {
@@ -160,6 +164,14 @@ pub struct UpdateDescriptionForm {
 pub struct ExpenseDetailQuery {
     from: Option<String>,
     friend_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct ExpenseEditQuery {
+    panel_id: Option<String>,
+    back_url: Option<String>,
+    back_target: Option<String>,
+    back_swap: Option<String>,
 }
 
 // preveri, ali je uporabnik udeležen v strošku
@@ -482,6 +494,7 @@ pub async fn expense_description_form(
     State(state): State<AppState>,
     jar: CookieJar,
     Path(expense_id): Path<i32>,
+    Query(query): Query<ExpenseEditQuery>,
 ) -> Response {
     match get_current_user(&state, &jar).await {
         Ok(Some(_)) => {}
@@ -519,7 +532,21 @@ pub async fn expense_description_form(
         }
     };
 
-    let template = ExpenseDescriptionFormTemplate { expense };
+    let template = ExpenseDescriptionFormTemplate {
+        expense,
+        panel_id: query
+            .panel_id
+            .unwrap_or_else(|| "activity-panel".to_string()),
+        back_url: query
+            .back_url
+            .unwrap_or_else(|| "/tabs/activity".to_string()),
+        back_target: query
+            .back_target
+            .unwrap_or_else(|| "#tab-shell".to_string()),
+        back_swap: query
+            .back_swap
+            .unwrap_or_else(|| "outerHTML".to_string()),
+    };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -541,6 +568,7 @@ pub async fn update_expense_description_handler(
     State(state): State<AppState>,
     jar: CookieJar,
     Path(expense_id): Path<i32>,
+    Query(query): Query<ExpenseEditQuery>,
     Form(form): Form<UpdateDescriptionForm>,
 ) -> Response {
     let user = match get_current_user(&state, &jar).await {
@@ -585,15 +613,30 @@ pub async fn update_expense_description_handler(
         return (StatusCode::BAD_REQUEST, error.to_string()).into_response();
     }
 
-    // urejanje je na voljo le iz zavihka Aktivnost
+    let panel_id = query
+        .panel_id
+        .unwrap_or_else(|| "activity-panel".to_string());
+
+    let back_url = query
+        .back_url
+        .unwrap_or_else(|| "/tabs/activity".to_string());
+
+    let back_target = query
+        .back_target
+        .unwrap_or_else(|| "#tab-shell".to_string());
+
+    let back_swap = query
+        .back_swap
+        .unwrap_or_else(|| "outerHTML".to_string());
+
     render_expense_detail(
         &state,
         expense_id,
         user.id,
-        "activity-panel",
-        "/tabs/activity",
-        "#tab-shell",
-        "outerHTML",
+        &panel_id,
+        &back_url,
+        &back_target,
+        &back_swap,
     )
     .await
 }
