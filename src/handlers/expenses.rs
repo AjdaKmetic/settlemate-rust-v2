@@ -106,7 +106,7 @@ fn parse_amount_to_cents(amount: &str) -> Result<i64, &'static str> {
         .parse::<f64>()
         .map_err(|_| "Vnesi veljaven znesek, na primer 12,50.")?;
 
-    if !amount_euros.is_finite() || amount_euros <= 0.0 {
+    if amount_euros <= 0.0 {
         return Err("Znesek mora biti večji od nič.");
     }
 
@@ -406,11 +406,7 @@ pub async fn create_expense_handler(
                         .into_response();
                 }
             };
-
-            if !members.iter().any(|member| member.id == user.id) {
-                return (StatusCode::FORBIDDEN, "Nisi član izbrane skupine.").into_response();
-            }
-
+            
             members
                 .into_iter()
                 .filter(|member| member.id != user.id)
