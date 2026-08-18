@@ -24,15 +24,27 @@
             Shrani
         </button>
 
-        <button
-            type="button"
-            class="btn-cancel"
-            hx-get="{{ back_url }}"
-            hx-target="{{ back_target }}"
-            hx-swap="{{ back_swap }}"
-        >
-            Prekliči
-        </button>
+        {% if panel_id == "activity-panel" %}
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-get="/tabs/activity"
+                hx-target="#tab-shell"
+                hx-swap="outerHTML"
+            >
+                Prekliči
+            </button>
+        {% else %}
+            <button
+                type="button"
+                class="btn-cancel"
+                hx-get="{{ back_url }}"
+                hx-target="#friends-panel"
+                hx-swap="outerHTML"
+            >
+                Prekliči
+            </button>
+        {% endif %}
     </form>
 
 </div>
